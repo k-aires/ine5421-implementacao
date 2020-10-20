@@ -21,28 +21,28 @@ def open_file_menu():
     _nope()
 
 def save_file_menu():
-    _nope()
+    return input("Nome do arquivo: ")
 
 def finite_automata_menu():
     t_menu = TerminalMenu(["Conversão para AFD","Conversão para GR",
         "Reconhecimento de sentença","Minimização","União","Interseção",
-        "Editar","Exportar","Menu","Sair"])
+        "Editar","Salvar","Menu","Sair"])
     return t_menu.show()
 
 def regular_grammar_menu():
     t_menu = TerminalMenu(["Conversão para AFND",
-        "Editar","Exportar","Menu","Sair"])
+        "Editar","Salvar","Menu","Sair"])
     return t_menu.show()
 
 def regular_expression_menu():
     t_menu = TerminalMenu(["Conversão para AFD",
-        "Editar","Exportar","Menu","Sair"])
+        "Editar","Salvar","Menu","Sair"])
     return t_menu.show()
 
 def context_free_grammar_menu():
     t_menu = TerminalMenu(["Forma normal de Chomsky",
         "Eliminação de recursão à esquerda","Fatoração",
-        "Editar","Exportar","Menu","Sair"])
+        "Editar","Salvar","Menu","Sair"])
     return t_menu.show()
 
 def automata_input():
@@ -125,6 +125,7 @@ def grammar_input(grammar_type):
         else:
             _invalid()
         gram.append(inp)
+    gram = grammar.format_grammar(gram)
     return gram
 
 def expression_input():

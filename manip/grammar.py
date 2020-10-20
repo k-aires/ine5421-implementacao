@@ -41,3 +41,19 @@ def _verify_regular(inp):
 
 def _verify_context_free(inp):
     return False
+
+def format_grammar(grammar):
+    gram = {}
+
+    for g in grammar:
+        g = g.split(" -> ")
+        if g[0] not in gram:
+            gram[g[0]] = []
+        g[1] = g[1].split("|")
+        if len(g[1]) == 1:
+            gram[g[0]].append[g[1][0]]
+        else:
+            for o in g[1]:
+                grammar.append(g[0]+" -> "+o)
+
+    return gram
