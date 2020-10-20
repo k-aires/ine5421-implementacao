@@ -27,7 +27,6 @@ def _verify_pattern(pattern):
     char_before = ""
     group_test = False
     for char in pattern:
-        print(char)
         if group_test: # Entra em verificação de grupo
             if char == "]": # Termina grupo
                 if char_stack[-1] != "[":
@@ -109,3 +108,9 @@ def _verify_pattern(pattern):
     
     return match
 
+def format_expression(expression):
+    exp = {}
+    for e in expression:
+        e.split(": ")
+        exp[e[0]] = e[1]
+    return exp

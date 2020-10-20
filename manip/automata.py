@@ -31,15 +31,14 @@ def format_transitions(transitions):
     trans = {}
     for t in transitions:
         t = t.split(",")
-        t[2] = t.split("-")
+        t[2] = t[2].split("-")
         if len(t[2]) > 1:
             for s in t[2]:
                 new_s = t[0]+","+t[1]+","+s
-                print(new_s)
                 transitions.append(new_s)
             continue
         t[0] = int(t[0])
-        t[2] = int(t[2])
+        t[2] = int(t[2][0])
         if t[0] not in trans:
             trans[t[0]] = {}
         trans[t[0]][t[2]] = t[1]

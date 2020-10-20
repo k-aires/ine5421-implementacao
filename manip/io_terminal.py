@@ -51,7 +51,7 @@ def automata_input():
     while True: # Pega primeiro input, de número de estados
         state_count = input("Número de estados: ")
         if state_count.isdecimal():
-            aut[count] = int(state_count)
+            aut["count"] = int(state_count)
             break
         else:
             _invalid()
@@ -62,10 +62,10 @@ def automata_input():
             _invalid()
         else:
             initial_state = int(initial_state)
-            if initial_state >= aut[count]:
+            if initial_state >= aut["count"]:
                 _invalid()
             else:
-                aut[initial] = initial_state
+                aut["initial"] = initial_state
                 break
 
     while True: # Pega terceiro input, dos estados finais
@@ -77,12 +77,12 @@ def automata_input():
                 nerr = False
                 break
             s = int(s)
-            if s >= aut[count]:
+            if s >= aut["count"]:
                 _invalid()
                 nerr = False
                 break
         if nerr:
-            aut[final] = final_states
+            aut["final"] = final_states
             break
 
     while True: # Pega quarto input, do alfabeto
@@ -94,7 +94,7 @@ def automata_input():
                 nerr = False
                 break
         if nerr:
-            aut[alphabet] = alphabet
+            aut["alphabet"] = alphabet
             break
 
     print("Transições (para sair do input, digite .):")
@@ -103,11 +103,11 @@ def automata_input():
         inp = input()
         if inp == ".":
             break
-        if automata.verify_input(aut[cont],aut[alphabet],inp):
+        if automata.verify_input(aut["count"],aut["alphabet"],inp):
             transitions.append(inp)
         else:
             _invalid()
-    aut[transitions] = automata.format_transitions(transitions)
+    aut["transitions"] = automata.format_transitions(transitions)
 
     return aut
 
@@ -135,6 +135,7 @@ def expression_input():
             exp.append(inp)
         else:
             _invalid()
+    exp = expression.format_expression(exp)
     return exp
 
 def _invalid():
