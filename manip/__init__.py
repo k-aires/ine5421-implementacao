@@ -37,7 +37,7 @@ def finite_automata():
     aut = io_terminal.automata_input()
 
 def regular_grammar():
-    gram = io_terminal.grammar_input()
+    gram = io_terminal.grammar_input(0)
 
 def regular_expression():
     exp = io_terminal.expression_input()

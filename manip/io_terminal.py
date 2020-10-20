@@ -111,13 +111,19 @@ def automata_input():
 
     return aut
 
-def grammar_input():
+def grammar_input(grammar_type):
+    # grammar_type: 0 indica regular, 1 indica livre de contexto
     print("Input para gramáticas. Para sair do input, digite .")
     gram = []
     while True:
         inp = input()
         if inp == ".":
             break
+        
+        if grammar.verify_input(grammar_type,inp):
+            gram.append(inp)
+        else:
+            _invalid()
         gram.append(inp)
     return gram
 
