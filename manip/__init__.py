@@ -60,24 +60,33 @@ def finite_automata():
     global struct
     struct_type = StructType.AUTOMATA
     struct = io_terminal.automata_input()
-    inp = io_terminal.finite_automata_menu()
-    if inp == 0: # Conversão para AFD
-        io_terminal._nope()
-    elif inp == 1: # Conversão para GR
-        io_terminal._nope()
-    elif inp == 2: # Reconhecimento de sentença
-        io_terminal._nope()
-    elif inp == 3: # Minimização
-        io_terminal._nope()
-    elif inp == 4: # União
-        io_terminal._nope()
-    elif inp == 5: # Interseção
-        io_terminal._nope()
-    elif inp == 6: # Editar
-        io_terminal._nope()
-    elif inp == 7: # Salvar
-        file_menu(False)
-    elif inp == 8: # Menu
+    ret = False
+    while True:
+        inp = io_terminal.finite_automata_menu()
+        if inp == 0: # Conversão para AFD
+            io_terminal._nope()
+        elif inp == 1: # Conversão para GR
+            io_terminal._nope()
+        elif inp == 2: # Reconhecimento de sentença
+            sentence = io_terminal.sentence_input()
+            belongs = automata.recognize_sentence(sentence,struct)
+            io_terminal.recognize_sentence(belongs)
+        elif inp == 3: # Minimização
+            io_terminal._nope()
+        elif inp == 4: # União
+            io_terminal._nope()
+        elif inp == 5: # Interseção
+            io_terminal._nope()
+        elif inp == 6: # Editar
+            io_terminal._nope()
+        elif inp == 7: # Salvar
+            file_menu(False)
+        elif inp == 8: # Menu
+            ret = True
+            break
+        elif inp == 9: # Sair
+            break
+    if ret:
         menu()
 
 def regular_grammar():

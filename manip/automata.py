@@ -1,3 +1,10 @@
+from enum import Enum, auto
+
+class Error(Enum):
+    NONE = auto()
+    DEAD = auto()
+    ALPHABET = auto()
+
 def verify_input(state_count,alphabet,inp):
     ret = True
     inp = inp.split(",")
@@ -43,3 +50,30 @@ def format_transitions(transitions):
             trans[t[0]] = {}
         trans[t[0]][t[2]] = t[1]
     return trans
+
+def recognize_sentence(sentence,automata):
+    belongs = Error.NONE
+    current_state = automata["initial"]
+    transitions = automata["transitions"]
+    for char in sentence:
+        if char not in automata["alphabet"]:
+            belongs = Error.ALPHABET
+            break
+        elif current_state not in transitions:
+            belongs = Error.DEAD
+            break
+        elif char not in transitions[current_state].values():
+            belongs = Error.DEAD
+            break
+        else:
+            current_state = _get_key(char,transitions[current_state])
+    
+    return belongs
+
+def _get_key(value,dic):
+    key = -1
+    for k,v in dic.items():
+        if v == value:
+            key = k
+            break
+    return key

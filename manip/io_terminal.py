@@ -145,6 +145,17 @@ def expression_input():
     exp = expression.format_expression(exp)
     return exp
 
+def sentence_input():
+    return input("Sentença: ")
+
+def recognize_sentence(error):
+    if error == automata.Error.NONE:
+        print("Sentença pertence.")
+    elif error == automata.Error.DEAD:
+        print("Sentença não pertence.")
+    elif error == automata.Error.ALPHABET:
+        print("Sentença não adere ao alfabeto.")
+
 def _invalid():
     print("Input inválido. Por favor, tente novamente.")
 
