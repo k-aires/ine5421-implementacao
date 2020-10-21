@@ -71,13 +71,13 @@ def automata_input():
     while True: # Pega terceiro input, dos estados finais
         final_states = input("Estados finais: ").split(",")
         nerr = True
-        for s in final_states:
-            if not s.isdecimal():
+        for i in range(0,len(final_states)):
+            if not final_states[i].isdecimal():
                 _invalid()
                 nerr = False
                 break
-            s = int(s)
-            if s >= aut["count"]:
+            final_states[i] = int(final_states[i])
+            if final_states[i] >= aut["count"]:
                 _invalid()
                 nerr = False
                 break
