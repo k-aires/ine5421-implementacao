@@ -69,25 +69,37 @@ def recognize_sentence(sentence,automata):
             elif current_state[0] not in transitions:
                 break
             else:
+                if "&" in automata["alphabet"]: # Aumenta árvore do não-determinismo no epsilon
+                    epsilon = _get_keys("&",transitions[current_state[0]])
+                    for e in range(0,len(epsilon)):
+                        current_state.append(epsilon[e])
+                        current_char.append(current_char[0])
+                
                 next_states = _get_keys(char,transitions[current_state[0]])
-                if len(next_states) < 1:
+                if len(next_states) < 1: # Verifica se tem transições pelo char no estado atual
                     break
                 else:
                     current_state[0] = next_states[0]
                     current_char[0] = i+1
-                    for j in range(1,len(next_states)):
-                        print(next_states)
+                    for j in range(1,len(next_states)): # Aumenta árvore do não-determinístico
                         current_state.append(next_states[j])
                         current_char.append(i+1)
-                    print("state: ",current_state)
+        
+        if "&" in automata["alphabet"] and current_state[0] in transitions: # Verifica transições por epsilon no último estado
+            epsilon = _get_keys("&",transitions[current_state[0]])
+            for e in range(0,len(epsilon)):
+                current_state.append(epsilon[e])
+                current_char.append(current_char[0])
+        
+        print(current_state,"\n",current_char)
 
-        if current_char[0] == len(sentence):
-            if current_state[0] in automata["final"]:
+        if current_char[0] == len(sentence): # Verifica se consome toda a entrada
+            if current_state[0] in automata["final"]: # Verifica se termina num estado final
                 belongs = Error.NONE
                 break
-        current_state.popleft()
+
+        current_state.popleft() # Para para próximo ramo da árvore
         current_char.popleft()
-        print("pass: ",current_char)
     
     return belongs
 
