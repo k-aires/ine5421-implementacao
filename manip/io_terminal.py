@@ -18,7 +18,8 @@ def input_menu():
     return t_menu.show()
 
 def open_file_menu():
-    _nope()
+    inp = input("Nome do arquivo: ")
+    return inp
 
 def save_file_menu():
     return input("Nome do arquivo: ")
@@ -155,6 +156,9 @@ def recognize_sentence(error):
         print("Sentença não pertence.")
     elif error == automata.Error.ALPHABET:
         print("Sentença não adere ao alfabeto.")
+
+def file_error():
+    print("Arquivo ou diretório não encontrado ou vazio.")
 
 def _invalid():
     print("Input inválido. Por favor, tente novamente.")

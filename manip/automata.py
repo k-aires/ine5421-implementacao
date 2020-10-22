@@ -66,16 +66,17 @@ def recognize_sentence(sentence,automata):
             if char not in automata["alphabet"]:
                 belongs = Error.ALPHABET
                 break
-            elif current_state[0] not in transitions:
+            elif str(current_state[0]) not in transitions:
+                print(transitions)
                 break
             else:
                 if "&" in automata["alphabet"]: # Aumenta árvore do não-determinismo no epsilon
-                    epsilon = _get_keys("&",transitions[current_state[0]])
+                    epsilon = _get_keys("&",transitions[str(current_state[0])])
                     for e in range(0,len(epsilon)):
                         current_state.append(epsilon[e])
                         current_char.append(current_char[0])
                 
-                next_states = _get_keys(char,transitions[current_state[0]])
+                next_states = _get_keys(char,transitions[str(current_state[0])])
                 if len(next_states) < 1: # Verifica se tem transições pelo char no estado atual
                     break
                 else:
@@ -85,8 +86,8 @@ def recognize_sentence(sentence,automata):
                         current_state.append(next_states[j])
                         current_char.append(i+1)
         
-        if "&" in automata["alphabet"] and current_state[0] in transitions: # Verifica transições por epsilon no último estado
-            epsilon = _get_keys("&",transitions[current_state[0]])
+        if "&" in automata["alphabet"] and str(current_state[0]) in transitions: # Verifica transições por epsilon no último estado
+            epsilon = _get_keys("&",transitions[str(current_state[0])])
             for e in range(0,len(epsilon)):
                 current_state.append(epsilon[e])
                 current_char.append(current_char[0])
@@ -107,5 +108,5 @@ def _get_keys(value,dic):
     key = []
     for k,v in dic.items():
         if value in v:
-            key.append(k)
+            key.append(int(k))
     return key
