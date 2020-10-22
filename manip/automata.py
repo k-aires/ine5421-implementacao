@@ -56,11 +56,12 @@ def format_transitions(transitions):
 
 def recognize_sentence(sentence,automata):
     belongs = Error.DEAD
+
     current_state = deque([automata["initial"]])
-    current_pass = deque([0])
+    current_char = deque([0])
     transitions = automata["transitions"]
-    while len(current_pass) > 0:
-        for i in range(current_pass[0],len(sentence)):
+    while len(current_char) > 0:
+        for i in range(current_char[0],len(sentence)):
             char = sentence[i]
             if char not in automata["alphabet"]:
                 belongs = Error.ALPHABET
@@ -73,17 +74,20 @@ def recognize_sentence(sentence,automata):
                     break
                 else:
                     current_state[0] = next_states[0]
-                    current_pass[0] = i+1
+                    current_char[0] = i+1
                     for j in range(1,len(next_states)):
+                        print(next_states)
                         current_state.append(next_states[j])
-                        current_pass.append(i+1)
-        if current_pass[0] == len(sentence):
+                        current_char.append(i+1)
+                    print("state: ",current_state)
+
+        if current_char[0] == len(sentence):
             if current_state[0] in automata["final"]:
                 belongs = Error.NONE
                 break
         current_state.popleft()
-        current_pass.popleft()
-        finished = True
+        current_char.popleft()
+        print("pass: ",current_char)
     
     return belongs
 
@@ -92,5 +96,4 @@ def _get_keys(value,dic):
     for k,v in dic.items():
         if value in v:
             key.append(k)
-            break
     return key
