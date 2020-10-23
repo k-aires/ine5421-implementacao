@@ -1,5 +1,6 @@
 # Importa módulo para interface no terminal
 from simple_term_menu import TerminalMenu
+import os
 
 # Importa arquivos de lógica
 import automata
@@ -17,8 +18,18 @@ def input_menu():
         "Expressão regular","Gramática livre de contexto","Menu","Sair"])
     return t_menu.show()
 
-def open_file_menu():
-    inp = input("Nome do arquivo: ")
+def open_file_menu(dir_path):
+    files = []
+    inp = ""
+    if os.path.isdir(dir_path):
+        files = os.listdir(dir_path)
+
+    if len(files) > 0:
+        t_menu = TerminalMenu(files)
+        inp = files[t_menu.show()]
+    else:
+        file_error()
+    
     return inp
 
 def save_file_menu():
@@ -156,6 +167,23 @@ def recognize_sentence(error):
         print("Sentença não pertence.")
     elif error == automata.Error.ALPHABET:
         print("Sentença não adere ao alfabeto.")
+
+def print_automata(struct):
+    print("Número de estados: ", struct["count"])
+    print("Estado inicial: ", struct["initial"])
+    print("Estados finais: ", struct["final"])
+    print("Alfabeto: ", struct["alphabet"])
+    print("Transições:")
+    for f in struct["transitions"]:
+        for t in struct["transitions"][f]:
+            for a in struct["transitions"][f][t]:
+                print(f,",",a,",",t)
+
+def print_expression(struct):
+    _nope()
+
+def print_grammar(struct):
+    _nope()
 
 def file_error():
     print("Arquivo ou diretório não encontrado ou vazio.")

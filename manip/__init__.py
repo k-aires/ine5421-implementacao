@@ -50,8 +50,8 @@ def file_menu(opening):
         os.makedirs(file_path)
 
     if opening:
-        file_name = io_terminal.open_file_menu()
-        if os.path.isfile(file_path+file_name):
+        file_name = io_terminal.open_file_menu(file_path)
+        if os.path.isfile(file_path+file_name) and file_name != "":
             save = []
             with open(file_path+file_name,"r") as f:
                 save = json.loads(f.read())
@@ -63,7 +63,8 @@ def file_menu(opening):
             else:
                 struct_type = save[0]
                 struct = save[1]
-                print(struct)
+                if struct_type == StructType.AUTOMATA:
+                    io_terminal.print_automata(struct)
         else:
             io_terminal.file_error()
         
