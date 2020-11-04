@@ -230,8 +230,80 @@ def intersect_automata(aut1,aut2):
 
     automata = unite_automata(aut1,aut2)
     automata = complement(automata)
+    automata = minimize_automata(automata)
 
-    # TODO: Minimizar autômato.
+    return automata
+
+def minimize_automata(automata):
+    remove = set()
+    # Descobre os estados mortos
+    for state in range(0,automata["count"]):
+        if state in automata["final"]: # Verifica se é final
+            continue
+        if str(state) in automata["transitions"]: # Verifica se tem transições
+            if automata["transitions"][str(state)]:
+                continue
+        remove.add(state)
+
+    # Descobre os estados inalcançáveis
+    reach = [automata["initial"]]
+    count = 0
+    while True: # Descobre os alcançáveis
+        current_state = reach[count]
+        count += 1
+
+        next_states = set()
+        for a in automata["alphabet"]:
+            next_states = next_states.union(_get_keys(a,automata["transitions"][str["current_state"]]))
+
+        for s in next_states:
+            if s not in reach:
+                reach.append(s)
+        
+        if count >= len(reach):
+            break
+    
+    for s in range(0,automata["count"]): # Marca os inalcançáveis
+        if s not in reach:
+            remove.add(s)
+    
+    # Retira os estados mortos/inalcalçáveis
+    automata = _remove_states(automata,remove)
+
+    # TODO: Juntar estados equivalentes, na minimização
+
+    return automata
+
+def _remove_states(automata,states):
+    corresp = {}
+    count = 0
+    for s in range(0,automata["count"]): # Acha a correspondência de estados
+        if s not in states:
+            corresp[s] = count
+            count += 1
+    
+    for s in range(0,automata["count"]):
+        if s in states: # Tira estado
+            if s in automata["final"]:
+                automata["final"].remove(s)
+            if str(s) in automata["transitions"]:
+                del automata["transitions"][str(s)]
+        else: # Arruma transições aplicando correspondência
+            if str(s) in automata["transitions"]:
+                transitions = {}
+                for k,v in automata["transitions"][str(s)].items():
+                    if k in states:
+                        continue
+                    transitions[str(corresp(k))] = v
+                del automata["transitions"][str(s)]
+                automata["transitions"][str(corresp[s])] = transitions
+
+    automata["count"] = len(corresp)
+    final = []
+    for s in automata["final"]:
+        final += corresp[s]
+    automata["final"] = final
+    automata["initial"] = corresp[automata["initial"]]
 
     return automata
 
