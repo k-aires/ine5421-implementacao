@@ -27,6 +27,14 @@ def menu():
         input_menu()
     elif inp == 1:
         file_menu(True)
+        if struct_type == StructType.AUTOMATA:
+            finite_automata_menu()
+        elif struct_type == StructType.EXPRESSION:
+            regular_expression_menu()
+        elif struct_type == StructType.RGRAMMAR:
+            regular_grammar_menu()
+        elif struct_type == StructType.CFGRAMMAR:
+            io_terminal._nope()
 
 def input_menu():
     inp = io_terminal.input_menu()
@@ -72,15 +80,6 @@ def file_menu(opening):
         file_name = io_terminal.save_file_menu()
         with open(file_path+file_name,"w") as f:
             print(json.dumps([struct_type.value,struct]),file=f)
-    
-    if struct_type == StructType.AUTOMATA:
-        finite_automata_menu()
-    elif struct_type == StructType.EXPRESSION:
-        regular_expression_menu()
-    elif struct_type == StructType.RGRAMMAR:
-        regular_grammar_menu()
-    elif struct_type == StructType.CFGRAMMAR:
-        io_terminal._nope()
 
 def finite_automata():
     global struct_type
@@ -90,11 +89,15 @@ def finite_automata():
     finite_automata_menu()
 
 def finite_automata_menu():
+    global struct_type
+    global struct
+
     ret = False
     while True:
         inp = io_terminal.finite_automata_menu()
         if inp == 0: # Conversão para AFD
-            io_terminal._nope()
+            struct = automata.determine_automata(struct)
+            io_terminal.print_automata(struct)
         elif inp == 1: # Conversão para GR
             io_terminal._nope()
         elif inp == 2: # Reconhecimento de sentença
@@ -104,7 +107,8 @@ def finite_automata_menu():
         elif inp == 3: # Minimização
             io_terminal._nope()
         elif inp == 4: # União
-            io_terminal._nope()
+            finite_automata_union()
+            io_terminal.print_automata(struct)
         elif inp == 5: # Interseção
             io_terminal._nope()
         elif inp == 6: # Editar
@@ -118,6 +122,26 @@ def finite_automata_menu():
             break
     if ret:
         menu()
+
+def finite_automata_union():
+    global struct
+    global struct_type
+    
+    aut = struct
+    inp = io_terminal.another_menu()
+    if inp == 0: # Input
+        aut = io_terminal.automata_input()
+    elif inp == 1: # Arquivo
+        file_menu(True)
+        if struct_type != StructType.AUTOMATA:
+            io_terminal._invalid()
+            struct_type = StructType.AUTOMATA
+            struct = aut
+            return
+    else: # Voltar
+        return
+
+    struct = automata.unite_automata(aut,struct)
 
 def regular_grammar():
     global struct_type

@@ -104,9 +104,132 @@ def recognize_sentence(sentence,automata):
     
     return belongs
 
+def determine_automata(automata,_count_start=0):
+    epsilon = _get_epsilon_transitions(automata["transitions"])
+    corresp = {}
+
+    alphabet = set()
+    transitions = {}
+    count = _count_start
+    final = set()
+
+    this_state = {automata["initial"]}
+    if automata["initial"] in epsilon:
+        this_state = epsilon[automata["initial"]]
+    next_states = []
+    while True:
+        sstr = str(this_state)
+        if sstr in corresp:
+            if str(corresp[sstr]) in transitions:
+                if not next_states:
+                    break
+                this_state = next_states[0]
+                del next_states[0]
+                continue
+            else:
+                transitions[str(corresp[sstr])] = {}
+        else:
+            corresp[sstr] = count
+            transitions[str(corresp[sstr])] = {}
+            count += 1
+        
+        for s in this_state:
+            if s in automata["final"]:
+                final.add(corresp[sstr])
+                break
+
+        for a in automata["alphabet"]:
+            if a == "&":
+                continue
+            aux = []
+            for state in this_state:
+                if str(state) in automata["transitions"]:
+                    print("149")
+                    aux += _get_keys(a,automata["transitions"][str(state)])
+                for s in aux:
+                    if s in epsilon:
+                        for e in epsilon[s]:
+                            if e not in aux:
+                                aux.append(e)
+            aux = set(aux)
+
+            if not aux:
+                continue
+            else:
+                if a not in alphabet:
+                    alphabet.add(a)
+
+            if str(aux) not in corresp:
+                corresp[str(aux)] = count
+                count += 1
+            
+            transitions[str(corresp[sstr])][str(corresp[str(aux)])] = a
+            if aux not in next_states:
+                next_states.append(aux)
+
+    new_aut = {}
+    new_aut["count"] = count
+    new_aut["initial"] = _count_start
+    new_aut["final"] = []
+    new_aut["final"] += final
+    new_aut["alphabet"] = []
+    new_aut["alphabet"] += alphabet
+    new_aut["transitions"] = transitions
+
+    return new_aut
+
+def unite_automata(aut1,aut2):
+    aut1 = determine_automata(aut1)
+    print(aut1)
+    aut2 = determine_automata(aut2,aut1["count"])
+    print(aut2)
+    alphabet = ["&"]
+    alphabet += set(aut1["alphabet"]) | set(aut2["alphabet"])
+    initial = aut2["count"]
+    transitions = aut1["transitions"]
+    transitions.update(aut2["transitions"])
+    transitions[initial] = {str(aut1["initial"]):"&",str(aut2["initial"]):"&"}
+
+    aut = {}
+    aut["count"] = aut2["count"]+1
+    aut["initial"] = initial
+    aut["final"] = aut1["final"]+aut2["final"]
+    aut["alphabet"] = alphabet
+    aut["transitions"] = transitions
+    aut = determine_automata(aut)
+
+    return aut
+
+def to_grammar(automata):
+    automata = determine_automata(automata)
+
 def _get_keys(value,dic):
     key = []
     for k,v in dic.items():
         if value in v:
             key.append(int(k))
     return key
+
+def _get_epsilon_transitions(transitions):
+    epsilon = {}
+    for s,t in transitions.items():
+        trans = _get_keys("&",t)
+        if not trans:
+            continue
+        
+        s = int(s)
+        epsilon[s] = {s}
+        
+        while trans:
+            e = trans[0]
+            if e not in epsilon[s]:
+                if e in transitions:
+                    trans += _get_keys("&",transitions[e])
+                epsilon[s].add(e)
+            while e in trans:
+                trans.remove(e)
+        
+        if epsilon[s] == {s}:
+            del epsilon[s]
+    
+    return epsilon

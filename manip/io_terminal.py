@@ -18,6 +18,10 @@ def input_menu():
         "Expressão regular","Gramática livre de contexto","Menu","Sair"])
     return t_menu.show()
 
+def another_menu():
+    t_menu = TerminalMenu(["Novo input","Abrir arquivo","Voltar"])
+    return t_menu.show()
+
 def open_file_menu(dir_path):
     files = []
     inp = ""
