@@ -107,10 +107,15 @@ def finite_automata_menu():
         elif inp == 3: # Minimização
             io_terminal._nope()
         elif inp == 4: # União
-            finite_automata_union()
-            io_terminal.print_automata(struct)
+            aut = finite_automata_another()
+            if aut != struct:
+                struct = automata.unite_automata(aut,struct)
+                io_terminal.print_automata(struct)
         elif inp == 5: # Interseção
-            io_terminal._nope()
+            aut = finite_automata_another()
+            if aut != struct:
+                struct = automata.intersect_automata(aut,struct)
+                io_terminal.print_automata(struct)
         elif inp == 6: # Editar
             io_terminal._nope()
         elif inp == 7: # Salvar
@@ -123,7 +128,7 @@ def finite_automata_menu():
     if ret:
         menu()
 
-def finite_automata_union():
+def finite_automata_another():
     global struct
     global struct_type
     
@@ -137,11 +142,10 @@ def finite_automata_union():
             io_terminal._invalid()
             struct_type = StructType.AUTOMATA
             struct = aut
-            return
-    else: # Voltar
-        return
+    
+    return aut
 
-    struct = automata.unite_automata(aut,struct)
+
 
 def regular_grammar():
     global struct_type

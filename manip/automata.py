@@ -144,7 +144,6 @@ def determine_automata(automata,_count_start=0):
             aux = []
             for state in this_state:
                 if str(state) in automata["transitions"]:
-                    print("149")
                     aux += _get_keys(a,automata["transitions"][str(state)])
                 for s in aux:
                     if s in epsilon:
@@ -180,9 +179,7 @@ def determine_automata(automata,_count_start=0):
 
 def unite_automata(aut1,aut2):
     aut1 = determine_automata(aut1)
-    print(aut1)
     aut2 = determine_automata(aut2,aut1["count"])
-    print(aut2)
     alphabet = ["&"]
     alphabet += set(aut1["alphabet"]) | set(aut2["alphabet"])
     initial = aut2["count"]
@@ -200,8 +197,43 @@ def unite_automata(aut1,aut2):
 
     return aut
 
-def to_grammar(automata):
+def complement(automata):
+    # O complemento precisa ser em cima de um autômato determinístico
     automata = determine_automata(automata)
+
+    # Cria estado morto, para completar o autômato
+    automata["transitions"][str(automata["count"])] = {}
+    for a in automata["alphabet"]:
+        if a == "&":
+            continue
+        automata["transitions"][str(automata["count"])][str(automata["count"])] = a
+    automata["count"] += 1
+
+    for state in range(0,automata["count"]):
+        if state in automata["final"]: # Faz estados finais serem não-finais
+            automata["final"].remove(state)
+        else: # Faz estados não-finais serem finais
+            automata["final"].append(state)
+        
+        for a in automata["alphabet"]: # Faz os estados transitarem pro morto
+            if a == "&": # Ignora epsilon
+                continue
+            if not _get_keys(a,automata["transitions"][str(state)]):
+                automata["transitions"][str(state)][str(automata["count"]-1)] = a
+    
+    return automata
+
+def intersect_automata(aut1,aut2):
+    # A interseção pode ser vista como o complemento da união dos complementos
+    aut1 = complement(aut1)
+    aut2 = complement(aut2)
+
+    automata = unite_automata(aut1,aut2)
+    automata = complement(automata)
+
+    # TODO: Minimizar autômato
+
+    return automata
 
 def _get_keys(value,dic):
     key = []
