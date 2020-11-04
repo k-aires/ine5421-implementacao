@@ -105,7 +105,8 @@ def finite_automata_menu():
             belongs = automata.recognize_sentence(sentence,struct)
             io_terminal.recognize_sentence(belongs)
         elif inp == 3: # Minimização
-            io_terminal._nope()
+            struct = automata.minimize_automata(struct)
+            io_terminal.print_automata(struct)
         elif inp == 4: # União
             aut = finite_automata_another()
             if aut != struct:
