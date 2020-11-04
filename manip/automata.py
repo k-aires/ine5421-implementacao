@@ -231,7 +231,7 @@ def intersect_automata(aut1,aut2):
     automata = unite_automata(aut1,aut2)
     automata = complement(automata)
 
-    # TODO: Minimizar autômato
+    # TODO: Minimizar autômato.
 
     return automata
 
