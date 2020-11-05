@@ -237,7 +237,16 @@ def intersect_automata(aut1,aut2):
 def minimize_automata(automata):
     # Para minimizar um autômato é preciso que ele seja determinístico
     automata = determine_automata(automata)
+    print("determined\n", automata)
+    automata = _remove_dead(automata)
+    print("undead\n", automata)
+    automata = _remove_unreachable(automata)
+    print("reach\n", automata)
+    automata = _remove_redundant(automata)
+    print("classes\n", automata)
+    return automata
 
+def _remove_dead(automata):
     remove = set()
     # Descobre os estados mortos
     for state in range(0,automata["count"]):
@@ -248,6 +257,10 @@ def minimize_automata(automata):
                 continue
         remove.add(state)
 
+    automata = _remove_states(automata,remove)
+    return automata
+
+def _remove_unreachable(automata):
     # Descobre os estados inalcançáveis
     reach = [automata["initial"]]
     count = 0
@@ -257,7 +270,7 @@ def minimize_automata(automata):
 
         next_states = set()
         for a in automata["alphabet"]:
-            next_states = next_states.union(_get_keys(a,automata["transitions"][str["current_state"]]))
+            next_states = next_states.union(_get_keys(a,automata["transitions"][str(current_state)]))
 
         for s in next_states:
             if s not in reach:
@@ -266,18 +279,21 @@ def minimize_automata(automata):
         if count >= len(reach):
             break
     
+    remove = set()
     for s in range(0,automata["count"]): # Marca os inalcançáveis
         if s not in reach:
             remove.add(s)
     
     # Retira os estados mortos/inalcalçáveis
     automata = _remove_states(automata,remove)
+    return automata
 
+def _remove_redundant(automata):
     # Descobre estados equivalentes
     current_it = []
     # Cria classes iniciais
-    current_it[0] = []
-    current_it[1] = automata["final"]
+    current_it.append([])
+    current_it.append(automata["final"])
     for s in range(0,automata["count"]):
         if s not in automata["final"]:
             current_it[0].append(s)
@@ -296,7 +312,9 @@ def minimize_automata(automata):
         for c in current_it:
             compare = {}
             for s in c:
-                to = _get_keys(symbol,automata["transitions"][str(s)])[0]
+                to = _get_keys(symbol,automata["transitions"][str(s)])
+                if len(to) == 0:
+                    to = -1
                 for i in range(0,len(current_it)):
                     if to in current_it[i]:
                         if i not in compare:
@@ -335,7 +353,9 @@ def minimize_automata(automata):
                 transitions[c][new_trans] = v
     
     automata["count"] = len(corresp)
-    automata["initial"] = _get_keys(automata["initial"], corresp)[0]
+    automata["initial"] = _get_keys(automata["initial"], corresp)
+    if len(automata["initial"]) == 0:
+        automata["initial"] = -1
     automata["final"] = final
     automata["transitions"] = transitions
 
@@ -359,16 +379,17 @@ def _remove_states(automata,states):
             if str(s) in automata["transitions"]:
                 transitions = {}
                 for k,v in automata["transitions"][str(s)].items():
+                    k = int(k)
                     if k in states:
                         continue
-                    transitions[str(corresp(k))] = v
+                    transitions[str(corresp[k])] = v
                 del automata["transitions"][str(s)]
                 automata["transitions"][str(corresp[s])] = transitions
 
     automata["count"] = len(corresp)
     final = []
     for s in automata["final"]:
-        final += corresp[s]
+        final.append(corresp[s])
     automata["final"] = final
     automata["initial"] = corresp[automata["initial"]]
 
