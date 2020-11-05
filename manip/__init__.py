@@ -151,9 +151,10 @@ def finite_automata_another():
 def regular_grammar():
     global struct_type
     global struct
-    struct_type = StructType.RGRAMMAR
     struct = io_terminal.grammar_input(0)
-    regular_grammar_menu()
+    if struct:
+        struct_type = StructType.RGRAMMAR
+        regular_grammar_menu()
 
 def regular_grammar_menu():
     ret = False
@@ -176,16 +177,18 @@ def regular_grammar_menu():
 def regular_expression():
     global struct_type
     global struct
-    struct_type = StructType.EXPRESSION
     struct = io_terminal.expression_input()
-    regular_expression_menu()
+    if struct:
+        struct_type = StructType.EXPRESSION
+        regular_expression_menu()
 
 def regular_expression_menu():
     ret = False
     while True:
         inp = io_terminal.regular_expression_menu()
         if inp == 0: # Conversão para AFD
-            io_terminal._nope()
+            struct = expression.afd_conversion(struct)
+            io_terminal.print_expression(struct)
         elif inp == 1: # Editar
             io_terminal._nope()
         elif inp == 2: # Salvar
