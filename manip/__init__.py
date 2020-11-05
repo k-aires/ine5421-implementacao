@@ -73,6 +73,8 @@ def file_menu(opening):
                 struct = save[1]
                 if struct_type == StructType.AUTOMATA:
                     io_terminal.print_automata(struct)
+                if struct_type == StructType.EXPRESSION:
+                    io_terminal.print_expression(struct)
         else:
             io_terminal.file_error()
         
@@ -145,8 +147,6 @@ def finite_automata_another():
             struct = aut
     
     return aut
-
-
 
 def regular_grammar():
     global struct_type

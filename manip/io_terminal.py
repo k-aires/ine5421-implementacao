@@ -159,6 +159,7 @@ def expression_input():
         else:
             _invalid()
     exp = expression.format_expression(exp)
+    print_expression(exp)
     return exp
 
 def sentence_input():
@@ -184,7 +185,8 @@ def print_automata(struct):
                 print(f,",",a,",",t)
 
 def print_expression(struct):
-    _nope()
+    for k,v in struct.items():
+        print(k,": ",v)
 
 def print_grammar(struct):
     _nope()

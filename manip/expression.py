@@ -111,6 +111,6 @@ def _verify_pattern(pattern):
 def format_expression(expression):
     exp = {}
     for e in expression:
-        e.split(": ")
+        e = e.split(": ")
         exp[e[0]] = e[1]
     return exp

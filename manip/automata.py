@@ -45,8 +45,8 @@ def format_transitions(transitions):
                 new_s = t[0]+","+t[1]+","+s
                 transitions.append(new_s)
             continue
-        t[0] = int(t[0])
-        t[2] = int(t[2][0])
+        t[0] = str(t[0])
+        t[2] = str(t[2][0])
         if t[0] not in trans:
             trans[t[0]] = {}
         if t[2] not in trans[t[0]]:
@@ -247,17 +247,28 @@ def minimize_automata(automata):
     return automata
 
 def _remove_dead(automata):
-    remove = set()
-    # Descobre os estados mortos
-    for state in range(0,automata["count"]):
-        if state in automata["final"]: # Verifica se é final
-            continue
-        if str(state) in automata["transitions"]: # Verifica se tem transições
-            if automata["transitions"][str(state)]:
+    alive = automata["final"].copy()
+    count = 0
+    while True:
+        if count >= len(alive):
+            break
+        for s in range(0,automata["count"]):
+            if s in alive:
                 continue
-        remove.add(state)
+            for to in list(automata["transitions"][str(s)]):
+                if int(to) in alive:
+                    if s not in alive:
+                        alive.append(s)
+                    break
+        count += 1
 
+    # Remove os mortos
+    remove = set()
+    for s in range(0,automata["count"]):
+        if s not in alive:
+            remove.add(s)
     automata = _remove_states(automata,remove)
+
     return automata
 
 def _remove_unreachable(automata):
@@ -298,9 +309,10 @@ def _remove_redundant(automata):
         if s not in automata["final"]:
             current_it[0].append(s)
 
-    count = 0
+    count = len(automata["alphabet"])-1
     continue_it = True
-    last_division = ""
+    last_division = automata["alphabet"][count]
+    count = 0
     while continue_it:
         next_it = []
         if count >= len(automata["alphabet"]):
@@ -310,29 +322,45 @@ def _remove_redundant(automata):
             continue_it = False
 
         for c in current_it:
+            if len(c) == 1:
+                next_it.append(c)
+                continue
             compare = {}
             for s in c:
                 to = _get_keys(symbol,automata["transitions"][str(s)])
                 if len(to) == 0:
-                    to = -1
+                    to.append(-1)
                 for i in range(0,len(current_it)):
-                    if to in current_it[i]:
+                    if to[0] == -1:
+                        if len(current_it) not in compare:
+                            compare[len(current_it)] = []
+                        compare[len(current_it)].append(s)
+                        break
+                    if to[0] in current_it[i]:
                         if i not in compare:
                             compare[i] = []
                         compare[i].append(s)
                         break
             for k,v in compare.items():
                 next_it.append(v)
-        
+    
         if current_it != next_it:
             last_division = symbol
             if not continue_it:
                 continue_it = True
-        
-        current_it = next_it
+
+        current_it = next_it.copy()
         count += 1
-    
-    # Redireciona transições estados redundantes
+
+        not_unique = True
+        for c in next_it:
+            if len(c) > 1:
+                not_unique = False
+                break
+        if not not_unique:
+            break
+
+    # Redireciona transições de estados redundantes
     corresp = {}
     for c in range(0,len(current_it)):
         corresp[c] = current_it[c]
@@ -345,17 +373,19 @@ def _remove_redundant(automata):
         if state in automata["final"]:
             final.append(c)
         
-        transitions[c] = {}
+        transitions[str(c)] = {}
         if str(state) in automata["transitions"]:
             trans = {}
-            for k,v in automata["transitions"][str(state)]:
-                new_trans = _get_keys(k,corresp)[0]
-                transitions[c][new_trans] = v
+            for k,v in automata["transitions"][str(state)].items():
+                new_trans = _get_keys(int(k),corresp)[0]
+                transitions[str(c)][str(new_trans)] = v
     
     automata["count"] = len(corresp)
     automata["initial"] = _get_keys(automata["initial"], corresp)
     if len(automata["initial"]) == 0:
         automata["initial"] = -1
+    else:
+        automata["initial"] = automata["initial"][0]
     automata["final"] = final
     automata["transitions"] = transitions
 
