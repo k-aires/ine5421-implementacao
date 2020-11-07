@@ -139,35 +139,45 @@ def _last_pos(tree):
     return ret
 
 def _sytanx_tree(expression):
-    trees = [Tree()]
-    tree_count = 0
+    trees = []
+    tree_count = -1
     symbol_count = 1
     tree_stack = []
     last = ""
     for symbol in expression:
         if last != "":
             if symbol in Symbols.OPERATIONS.value:
-                _add_to_syntax_tree(symbol,last,symbol_count,trees,tree_count)
+                if symbol == "|":
+                    tree_stack.append(last)
+                else:
+                    _add_to_syntax_tree(symbol,last,symbol_count,trees,tree_count)
             else:
                 _add_to_syntax_tree(".",last,symbol_count,trees,tree_count)
             if last == ")":
                 tree_count -= 1
             last = ""
             symbol_count += 1
+        elif symbol == "|":
+            tree_stack.append("|")
+
         if symbol in Symbols.GROUP.value:
             if symbol == "(":
                 tree_stack.append(symbol)
                 trees.append(Tree())
                 tree_count += 1
             else:
-                # TODO: lidar com operação a fazer em tree_stack
-                # Muito provavelmente vai ser só |
                 if tree_stack[-1] != "(":
                     pass
                 tree_stack.pop()
                 last = symbol
         elif symbol not in Symbols.OPERATIONS.value:
-            last = symbol
+            if tree_stack and tree_stack[-1] == "|":
+                _add_to_syntax_tree(tree_stack.pop(),symbol,symbol_count,trees,tree_count)
+            elif (tree_stack[-1] not in Symbols.OPERATIONS.value
+                and tree_stack[-1] not in Symbols.GROUP.value):
+                _start_or_chain_syntax_tree(tree_stack.pop(),symbol,symbol_count,trees,tree_count)
+            else:
+                last = symbol
 
     trees[0].show(idhidden=False)
     return trees[0]
@@ -200,10 +210,26 @@ def _add_to_syntax_tree(operand,symbol,symbol_count,trees,tree_count):
 
     this_tree = Tree()
     this_tree.create_node(operand,root_id)
-    this_tree.paste(root_id,symbol_tree)
     this_tree.paste(root_id,trees[tree_count])
+    this_tree.paste(root_id,symbol_tree)
     trees[tree_count] = this_tree
-    return trees
+
+def _start_or_chain_syntax_tree(last,symbol,symbol_count,trees,tree_count):
+    aux = Tree()
+    if trees[tree_count].root:
+        root_id = "."+str(symbol_count-1)
+        aux.create_node(".",root_id)
+        aux.paste(root_id,_copy_tree(trees[tree_count]))
+        aux.create_node(last,str(symbol_count-1),parent=root_id)
+    else:
+        aux.create_node(last,str(symbol_count-1))
+    
+    tree = Tree()
+    root_id = "|"+str(symbol_count)
+    tree.create_node("|",root_id)
+    tree.paste(root_id,aux)
+    tree.create_node(symbol,str(symbol_count),parent=root_id)
+    trees[tree_count] = tree
 
 def _copy_tree(tree):
     new = Tree(tree.subtree(tree.root))
@@ -278,4 +304,4 @@ def _condense_expression(expression):
         exp = expression[-1]
 
     print(exp)
-    return exp
+    return "("+exp+")"
