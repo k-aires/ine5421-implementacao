@@ -126,7 +126,8 @@ def afd_conversion(expression):
     alphabet = set()
     for symbol in exp:
         if symbol not in Symbols.OPERATIONS.value and symbol not in Symbols.GROUP.value:
-            alphabet.add(symbol)
+            if symbol != "&":
+                alphabet.add(symbol)
     
     final_pos = -1
     for node in tree.all_nodes():
@@ -385,20 +386,46 @@ def _condense_expression(expression):
                 continue
             new_exp = ""
             current_part = ""
+            group = ""
             subs_verified = True
+            subexp = False
             for symbol in v:
-                if symbol in Symbols.OPERATIONS.value or symbol in Symbols.GROUP.value:
-                    if current_part in expression: # Substitui
-                        # Adiciona para o grupo de expressões que não é final
-                        components.add(current_part)
-                        if current_part not in verified:
-                            subs_verified = False
-                        current_part = expression[current_part]
-                    new_exp += current_part
-                    new_exp += symbol
-                    current_part = ""
+                add_to_new = False
+                if current_part in expression: # Substitui
+                    # Adiciona para o grupo de expressões que não é final
+                    components.add(current_part)
+                    if current_part not in verified:
+                        subs_verified = False
+                    current_part = expression[current_part]
+                    subexp = True
+
+                if symbol in Symbols.OPERATIONS.value or symbol == "(":
+                    if symbol == "?":
+                        current_part = "("+current_part+"|&)"
+                        symbol = ""
+                    elif symbol == "+":
+                        new_exp += current_part
+                        symbol = "*"
+                    add_to_new = True
+                elif symbol == ")":
+                    group = ")"
                 else:
-                    current_part += symbol
+                    if subexp:
+                        add_to_new = True
+                    current_part += symbol+group
+                    if group == ")":
+                        group = ""
+                
+                if add_to_new:
+                    new_exp += current_part+group
+                    if group == ")":
+                        group = ""
+                    if not subexp:
+                        new_exp += symbol
+                    current_part = ""
+                    add_to_new = False
+                    subexp = False
+
             if current_part:
                 if current_part in expression:
                     components.add(current_part)
