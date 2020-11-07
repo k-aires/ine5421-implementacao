@@ -122,25 +122,127 @@ def format_expression(expression):
 
 def afd_conversion(expression):
     exp = _condense_expression(expression)
-    tree = _sytanx_tree(exp)
+    tree = _sytanx_tree("("+exp+")#")
+    alphabet = set()
+    for symbol in exp:
+        if symbol not in Symbols.OPERATIONS.value and symbol not in Symbols.GROUP.value:
+            alphabet.add(symbol)
+    
+    final_pos = -1
+    for node in tree.all_nodes():
+        if node.tag == "#":
+            final_pos = node.id
+            break
+
+    state = _first_pos(tree)
+    states = {"unmarked": [state], "marked": []}
+    corresp = {str(state):"0"}
+    transitions = {}
+    final = set()
+
+    while states["unmarked"]:
+        state = states["unmarked"][0]
+        states["marked"].append(state)
+        states["unmarked"].remove(state)
+        for symbol in alphabet:
+            value = set()
+            for pos in state:
+                if tree.get_node(pos).tag == symbol:
+                    value = value | _follow_pos(pos)
+            if value not in states["unmarked"] and value not in states["marked"]:
+                states["unmarked"].append(value)
+                corresp[str(value)] = len(corresp)
+            transitions[corresp(str(state))][corresp[str(value)]] = symbol
+        if first_pos in state:
+            final.add(corresp[str(state)])
+
     automata = {}
+    automata["count"] = len(corresp)
+    automata["initial"] = 0
+    automata["final"] = list(final)
+    automata["alphabet"] = list(alphabet)
+    automata["transitions"] = transitions
+
     return automata
 
 def _nullable(tree):
-    ret = True
-    return ret
+    nullable = False
+    root = tree.get_node(tree.root)
+    if root.tag == "&" or root.tag == "*":
+        nullable == True
+    else:
+        children = tree.children(root)
+        if children:
+            nullable = _nullable(tree.subtree(children[0]))
+            if len(children) > 1:
+                if root.tag == "|":
+                    nullable = nullable or _nullable(tree.subtree(children[1]))
+                elif root.tag == ".":
+                    nullable =  nullable and _nullable(tree.subtree(children[1]))
+
+    return nullable
 
 def _first_pos(tree):
-    ret = set()
-    return ret
+    first_pos = set()
+    root = tree.get_node(tree.root)
+    if tree.depth() == 0:
+        if root.tag != "&":
+            first_pos.add(root.id)
+    else:
+        children = tree.children(root)
+        if root.tag == "*":
+            first_pos = _first_pos(children[0])
+        elif root.tag == "|":
+            first_pos = _first_pos(tree.subtree(children[0]))
+            if len(children) > 1:
+                first_pos = first_pos | _first_pos(tree.subtree(children[1]))
+        elif root.tag == ".":
+            first_pos = _first_pos(tree.subtree(children[0]))
+            if _nullable(tree.subtree(children[0])) and len(children) > 1:
+                first_pos = first_pos | _first_pos(tree.subtree(children[1]))
+    return first_pos
 
 def _last_pos(tree):
-    ret = set()
-    return ret
+    last_pos = set()
+    root = tree.get_node(tree.root)
+    if tree.depth() == 0:
+        if root.tag != "&":
+            last_pos.add(root.id)
+    else:
+        children = tree.children(root)
+        if root.tag == "*":
+            last_pos = _last_pos(children[0])
+        elif root.tag == "|":
+            last_pos = _last_pos(tree.subtree(children[0]))
+            if len(children) > 1:
+                last_pos = last_pos | _last_pos(tree.subtree(children[1]))
+        elif root.tag == ".":
+            if len(children) > 1:
+                last_pos = _last_pos(tree.subtree(children[1]))
+                if _nullable(tree.subtree(children[1])):
+                    last_pos = last_pos | _last_pos(tree.subtree(children[0]))
+            else:
+                last_pos = _last_pos(tree.subtree(children[0]))
+
+    return first_pos
+
+def _follow_pos(pos, tree):
+    follow_pos = set()
+    parent = tree.parent(pos)
+    while True:
+        if parent.tag == "*":
+            if pos in _last_pos(tree.subtree(parent)):
+                follow_pos = follow_pos | _first_pos(tree.subtree(parent))
+        elif parent.tag == ".":
+            children = tree.children(parent)
+            if len(children) > 1 and pos in _last_pos(tree.subtree(children[0])):
+                follow_pos = follow_pos | _first_pos(children[1])
+                break
+        parent = tree.parent(parent.id)
+    return follow_pos
 
 def _sytanx_tree(expression):
     trees = []
-    tree_count = -1
     symbol_count = 1
     tree_stack = []
     last = ""
@@ -150,11 +252,9 @@ def _sytanx_tree(expression):
                 if symbol == "|":
                     tree_stack.append(last)
                 else:
-                    _add_to_syntax_tree(symbol,last,symbol_count,trees,tree_count)
+                    _add_to_syntax_tree(symbol,last,symbol_count,trees)
             else:
-                _add_to_syntax_tree(".",last,symbol_count,trees,tree_count)
-            if last == ")":
-                tree_count -= 1
+                _add_to_syntax_tree(".",last,symbol_count,trees)
             last = ""
             symbol_count += 1
         elif symbol == "|":
@@ -164,7 +264,6 @@ def _sytanx_tree(expression):
             if symbol == "(":
                 tree_stack.append(symbol)
                 trees.append(Tree())
-                tree_count += 1
             else:
                 if tree_stack[-1] != "(":
                     pass
@@ -172,21 +271,24 @@ def _sytanx_tree(expression):
                 last = symbol
         elif symbol not in Symbols.OPERATIONS.value:
             if tree_stack and tree_stack[-1] == "|":
-                _add_to_syntax_tree(tree_stack.pop(),symbol,symbol_count,trees,tree_count)
+                _add_or_syntax_tree(symbol,symbol_count,trees)
+                tree_stack.pop()
+                symbol_count += 1
             elif (tree_stack[-1] not in Symbols.OPERATIONS.value
                 and tree_stack[-1] not in Symbols.GROUP.value):
-                _start_or_chain_syntax_tree(tree_stack.pop(),symbol,symbol_count,trees,tree_count)
+                _start_or_chain_syntax_tree(tree_stack.pop(),symbol,symbol_count,trees)
+                symbol_count += 1
             else:
                 last = symbol
 
     trees[0].show(idhidden=False)
     return trees[0]
 
-def _add_to_syntax_tree(operand,symbol,symbol_count,trees,tree_count):
+def _add_to_syntax_tree(operand,symbol,symbol_count,trees):
     symbol_tree = Tree()
     symbol_tree.create_node(symbol,str(symbol_count))
     if symbol == ")":
-        tree = trees[tree_count]
+        tree = trees[-1]
         if operand == ".":
             symbol_tree = _copy_tree(tree)
         else:
@@ -196,10 +298,9 @@ def _add_to_syntax_tree(operand,symbol,symbol_count,trees,tree_count):
             symbol_tree.paste(root_id,_copy_tree(tree))
             operand = "."
         trees.pop()
-        tree_count -= 1
 
     root_id = operand+str(symbol_count)
-    if trees[tree_count].root:
+    if trees[-1].root:
         if operand != ".":
             aux = Tree()
             aux.create_node(operand,root_id)
@@ -210,16 +311,16 @@ def _add_to_syntax_tree(operand,symbol,symbol_count,trees,tree_count):
 
     this_tree = Tree()
     this_tree.create_node(operand,root_id)
-    this_tree.paste(root_id,trees[tree_count])
+    this_tree.paste(root_id,trees[-1])
     this_tree.paste(root_id,symbol_tree)
-    trees[tree_count] = this_tree
+    trees[-1] = this_tree
 
-def _start_or_chain_syntax_tree(last,symbol,symbol_count,trees,tree_count):
+def _start_or_chain_syntax_tree(last,symbol,symbol_count,trees):
     aux = Tree()
-    if trees[tree_count].root:
+    if trees[-1].root:
         root_id = "."+str(symbol_count-1)
         aux.create_node(".",root_id)
-        aux.paste(root_id,_copy_tree(trees[tree_count]))
+        aux.paste(root_id,_copy_tree(trees[-1]))
         aux.create_node(last,str(symbol_count-1),parent=root_id)
     else:
         aux.create_node(last,str(symbol_count-1))
@@ -229,7 +330,15 @@ def _start_or_chain_syntax_tree(last,symbol,symbol_count,trees,tree_count):
     tree.create_node("|",root_id)
     tree.paste(root_id,aux)
     tree.create_node(symbol,str(symbol_count),parent=root_id)
-    trees[tree_count] = tree
+    trees[-1] = tree
+
+def _add_or_syntax_tree(symbol,symbol_count,trees):
+    tree = Tree()
+    root_id = "|"+str(symbol_count)
+    tree.create_node("|",root_id)
+    tree.paste(root_id,_copy_tree(trees[-1]))
+    tree.create_node(symbol,str(symbol_count),root_id)
+    trees[-1] = tree
 
 def _copy_tree(tree):
     new = Tree(tree.subtree(tree.root))
@@ -290,6 +399,13 @@ def _condense_expression(expression):
                     current_part = ""
                 else:
                     current_part += symbol
+            if current_part:
+                if current_part in expression:
+                    components.add(current_part)
+                    if current_part not in verified:
+                        subs_verified = False
+                    current_part = expression[current_part]
+                new_exp += current_part
             if subs_verified:
                 verified.add(k)
             expression[k] = new_exp
@@ -304,4 +420,4 @@ def _condense_expression(expression):
         exp = expression[-1]
 
     print(exp)
-    return "("+exp+")"
+    return exp
