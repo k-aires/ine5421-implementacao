@@ -2,15 +2,17 @@ from enum import Enum
 from treelib import Node, Tree
 
 class Group(Enum):
-    DIGIT = [0,1,2,3,4,5,6,7,8,9]
-    L_ALPHA = ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o',
-                'p','q','r','s','t','u','v','x','w','y','z']
-    U_ALPHA = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O',
-                'P','Q','R','S','T','U','V','X','W','Y','Z']
-    I_ALPHA = L_ALPHA + U_ALPHA
-    L_ALNUM = L_ALPHA + DIGIT
-    U_ALNUM = U_ALPHA + DIGIT
-    I_ALNUM = I_ALPHA + DIGIT
+    DIGIT = "0|1|2|3|4|5|6|7|8|9"
+    L_ALPHA = "a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|x|w|y|z"
+    U_ALPHA = "A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|X|W|Y|Z"
+    I_ALPHA = L_ALPHA + "|" + U_ALPHA
+    L_ALNUM = L_ALPHA + "|" + DIGIT
+    U_ALNUM = U_ALPHA + "|" + DIGIT
+    I_ALNUM = I_ALPHA + "|" + DIGIT
+
+class Symbols(Enum):
+    OPERATIONS = ["|","*","?","+"]
+    GROUP = ["(",")"]
     
 def verify_input(inp):
     ret = True
@@ -119,7 +121,10 @@ def format_expression(expression):
     return exp
 
 def afd_conversion(expression):
-    return expression
+    exp = _condense_expression(expression)
+    tree = _sytanx_tree(exp)
+    automata = {}
+    return automata
 
 def _nullable(tree):
     ret = True
@@ -134,5 +139,143 @@ def _last_pos(tree):
     return ret
 
 def _sytanx_tree(expression):
-    tree = Tree()
-    return tree
+    trees = [Tree()]
+    tree_count = 0
+    symbol_count = 1
+    tree_stack = []
+    last = ""
+    for symbol in expression:
+        if last != "":
+            if symbol in Symbols.OPERATIONS.value:
+                _add_to_syntax_tree(symbol,last,symbol_count,trees,tree_count)
+            else:
+                _add_to_syntax_tree(".",last,symbol_count,trees,tree_count)
+            if last == ")":
+                tree_count -= 1
+            last = ""
+            symbol_count += 1
+        if symbol in Symbols.GROUP.value:
+            if symbol == "(":
+                tree_stack.append(symbol)
+                trees.append(Tree())
+                tree_count += 1
+            else:
+                # TODO: lidar com operação a fazer em tree_stack
+                # Muito provavelmente vai ser só |
+                if tree_stack[-1] != "(":
+                    pass
+                tree_stack.pop()
+                last = symbol
+        elif symbol not in Symbols.OPERATIONS.value:
+            last = symbol
+
+    trees[0].show(idhidden=False)
+    return trees[0]
+
+def _add_to_syntax_tree(operand,symbol,symbol_count,trees,tree_count):
+    symbol_tree = Tree()
+    symbol_tree.create_node(symbol,str(symbol_count))
+    if symbol == ")":
+        tree = trees[tree_count]
+        if operand == ".":
+            symbol_tree = _copy_tree(tree)
+        else:
+            symbol_tree = Tree()
+            root_id = operand+str(symbol_count)
+            symbol_tree.create_node(operand,root_id)
+            symbol_tree.paste(root_id,_copy_tree(tree))
+            operand = "."
+        trees.pop()
+        tree_count -= 1
+
+    root_id = operand+str(symbol_count)
+    if trees[tree_count].root:
+        if operand != ".":
+            aux = Tree()
+            aux.create_node(operand,root_id)
+            aux.paste(root_id,symbol_tree)
+            symbol_tree = _copy_tree(aux)
+            root_id = "."+str(symbol_count)
+            operand = "."
+
+    this_tree = Tree()
+    this_tree.create_node(operand,root_id)
+    this_tree.paste(root_id,symbol_tree)
+    this_tree.paste(root_id,trees[tree_count])
+    trees[tree_count] = this_tree
+    return trees
+
+def _copy_tree(tree):
+    new = Tree(tree.subtree(tree.root))
+    return new
+
+def _condense_expression(expression):
+    # Já se considera que a expressão passou pela verificação e está correta
+
+    for k,v in expression.items(): # Expande os grupos
+        group_test = False
+        new_exp = ""
+        exp_stack = [""]
+        for symbol in v:
+            if group_test: # Expande grupo baseado em Group
+                if symbol == "]":
+                    group_test = False
+                    while exp_stack[-1] != "(":
+                        if new_exp[-1] != "(":
+                            new_exp += "|"
+                        new_exp += exp_stack[-1].value
+                        exp_stack.pop()
+                    new_exp += ")"
+                    exp_stack.pop()
+                elif symbol == "z":
+                    exp_stack.append(Group.L_ALPHA)
+                elif symbol == "Z":
+                    exp_stack.append(Group.U_ALPHA)
+                elif symbol == "9":
+                    exp_stack.append(Group.DIGIT)
+            else: # Apenas copia os símbolos se não forem parte de um grupo
+                if symbol == "[":
+                    group_test = True
+                    new_exp += "("
+                    exp_stack.append("(")
+                else:
+                    new_exp += symbol
+        expression[k] = new_exp
+ 
+    components = set()
+    verified = set()
+    while len(verified) < len(expression): # Verifica chamadas de subexpressões
+        for k,v in expression.items():
+            if k in verified: # Não tem nenhuma subexpressão p/ substituir
+                continue
+            new_exp = ""
+            current_part = ""
+            subs_verified = True
+            for symbol in v:
+                if symbol in Symbols.OPERATIONS.value or symbol in Symbols.GROUP.value:
+                    if current_part in expression: # Substitui
+                        # Adiciona para o grupo de expressões que não é final
+                        components.add(current_part)
+                        if current_part not in verified:
+                            subs_verified = False
+                        current_part = expression[current_part]
+                    new_exp += current_part
+                    new_exp += symbol
+                    current_part = ""
+                else:
+                    current_part += symbol
+            if subs_verified:
+                verified.add(k)
+            expression[k] = new_exp
+
+    exp = ""
+    for k,v in expression.items():
+        if k not in components:
+            exp += v
+            break
+    
+    if exp == "":
+        exp = expression[-1]
+
+    print(exp)
+    return exp

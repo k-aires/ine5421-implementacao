@@ -157,6 +157,9 @@ def regular_grammar():
         regular_grammar_menu()
 
 def regular_grammar_menu():
+    global struct_type
+    global struct
+
     ret = False
     while True:
         inp = io_terminal.regular_grammar_menu()
@@ -181,14 +184,21 @@ def regular_expression():
     if struct:
         struct_type = StructType.EXPRESSION
         regular_expression_menu()
+    else:
+        menu()
 
 def regular_expression_menu():
+    global struct_type
+    global struct
+
     ret = False
     while True:
         inp = io_terminal.regular_expression_menu()
         if inp == 0: # Conversão para AFD
             struct = expression.afd_conversion(struct)
-            io_terminal.print_expression(struct)
+            struct_type = StructType.AUTOMATA
+            io_terminal.print_automata(struct)
+            finite_automata_menu()
         elif inp == 1: # Editar
             io_terminal._nope()
         elif inp == 2: # Salvar
