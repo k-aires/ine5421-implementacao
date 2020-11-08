@@ -243,11 +243,13 @@ def _follow_pos(pos, tree):
     return follow_pos
 
 def _sytanx_tree(expression):
+    print("start: ",expression)
     trees = []
     symbol_count = 1
     tree_stack = []
     last = ""
     for symbol in expression:
+        print("251 ",symbol)
         if last != "":
             if symbol in Symbols.OPERATIONS.value:
                 if symbol == "|":
@@ -266,8 +268,6 @@ def _sytanx_tree(expression):
                 tree_stack.append(symbol)
                 trees.append(Tree())
             else:
-                if tree_stack[-1] != "(":
-                    pass
                 tree_stack.pop()
                 last = symbol
         elif symbol not in Symbols.OPERATIONS.value:
@@ -286,35 +286,41 @@ def _sytanx_tree(expression):
     return trees[0]
 
 def _add_to_syntax_tree(operand,symbol,symbol_count,trees):
-    symbol_tree = Tree()
-    symbol_tree.create_node(symbol,str(symbol_count))
-    if symbol == ")":
-        tree = trees[-1]
-        if operand == ".":
-            symbol_tree = _copy_tree(tree)
+    print("287\n",trees[-1].show(idhidden=False))
+    child_1 = Tree()
+    child_2 = Tree()
+
+    if symbol != ")":
+        if trees[-1].root and operand != ".":
+            parent = operand+str(symbol_count)
+            child_1.create_node(operand,parent)
+            child_1.create_node(symbol,symbol_count,parent=parent)
+            operand = "."
         else:
-            symbol_tree = Tree()
-            root_id = operand+str(symbol_count)
-            symbol_tree.create_node(operand,root_id)
-            symbol_tree.paste(root_id,_copy_tree(tree))
-            operand = "."
-        trees.pop()
+            child_1.create_node(symbol,symbol_count)
 
+        if trees[-1].root:
+            child_2 = _copy_tree(trees[-1])
+    else:
+        if len(trees) > 1:
+            if symbol == ".":
+                child_1 = _copy_tree(trees.pop())
+            else:
+                parent = operand+str(symbol_count)
+                child_1.create_node(operand,parent)
+                child_1.paste(parent,_copy_tree(trees.pop()))
+                operand = "."
+        else:
+            child_1 = _copy_tree(trees[-1])
+
+    tree = Tree()
     root_id = operand+str(symbol_count)
-    if trees[-1].root:
-        if operand != ".":
-            aux = Tree()
-            aux.create_node(operand,root_id)
-            aux.paste(root_id,symbol_tree)
-            symbol_tree = _copy_tree(aux)
-            root_id = "."+str(symbol_count)
-            operand = "."
-
-    this_tree = Tree()
-    this_tree.create_node(operand,root_id)
-    this_tree.paste(root_id,trees[-1])
-    this_tree.paste(root_id,symbol_tree)
-    trees[-1] = this_tree
+    print(root_id)
+    tree.create_node(operand,root_id)
+    tree.paste(root_id,child_1)
+    if child_2.root:
+        tree.paste(root_id,child_2)
+    trees[-1] = tree
 
 def _start_or_chain_syntax_tree(last,symbol,symbol_count,trees):
     aux = Tree()
@@ -432,7 +438,7 @@ def _condense_expression(expression):
                     if current_part not in verified:
                         subs_verified = False
                     current_part = expression[current_part]
-                new_exp += current_part
+                new_exp += current_part+group
             if subs_verified:
                 verified.add(k)
             expression[k] = new_exp

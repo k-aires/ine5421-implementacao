@@ -195,10 +195,11 @@ def regular_expression_menu():
     while True:
         inp = io_terminal.regular_expression_menu()
         if inp == 0: # Conversão para AFD
-            struct = expression.afd_conversion(struct)
-            struct_type = StructType.AUTOMATA
-            io_terminal.print_automata(struct)
-            finite_automata_menu()
+            io_terminal._nope()
+            #struct = expression.afd_conversion(struct)
+            #struct_type = StructType.AUTOMATA
+            #io_terminal.print_automata(struct)
+            #finite_automata_menu()
         elif inp == 1: # Editar
             io_terminal._nope()
         elif inp == 2: # Salvar
