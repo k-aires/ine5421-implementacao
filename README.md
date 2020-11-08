@@ -39,3 +39,11 @@ sintaxe.
 - A conversão de ER para AFD foi parcialmente implementada, porém ainda não
   funciona. O problema atualmente está na árvore de sintaxe, o algoritmo da
 conversão em si a princípio funciona corretamente.
+
+# Execução
+- Para executar, é preciso baixar as bibliotecas auxiliares (seguindo os guias de instalação de cada uma);
+- Depois de baixadas as bibliotecas, bastar rodar
+
+```
+python manip/__init__.py
+```
