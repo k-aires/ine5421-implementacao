@@ -14,6 +14,7 @@ Universidade Federal de Santa Catarina
 - Bibliotecas auxiliares:
 	- [treelib](https://treelib.readthedocs.io/en/latest/)
 	- [simple-term-menu](https://pypi.org/project/simple-term-menu/)
+- Repositório: [github](https://github.com/lkaires/ine5421-implementacao)
 
 # Detalhes de implementação
 - O salvamento de arquivos usa json, passando a estrutura (um dicionário) para
