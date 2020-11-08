@@ -1,3 +1,6 @@
+# Helena Kunz Aires <07/11/2020>
+# INE - UFSC
+
 # Importa arquivos
 import io_terminal
 import expression

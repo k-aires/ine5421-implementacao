@@ -1,3 +1,6 @@
+# Helena Kunz Aires <07/11/2020>
+# INE - UFSC
+
 # Importa módulo para interface no terminal
 from simple_term_menu import TerminalMenu
 import os

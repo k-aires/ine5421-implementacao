@@ -1,3 +1,6 @@
+# Helena Kunz Aires <07/11/2020>
+# INE - UFSC
+
 from enum import Enum
 from treelib import Node, Tree
 

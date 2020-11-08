@@ -1,3 +1,6 @@
+# Helena Kunz Aires <07/11/2020>
+# INE - UFSC
+
 def verify_input(g_type,inp):
     ret = True
 
