@@ -143,7 +143,6 @@ def grammar_input(grammar_type):
             gram.append(inp)
         else:
             _invalid()
-        gram.append(inp)
     gram = grammar.format_grammar(gram)
     return gram
 

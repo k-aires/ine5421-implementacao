@@ -43,7 +43,21 @@ def _verify_regular(inp):
     return ret
 
 def _verify_context_free(inp):
-    return False
+    ret = True
+    inp = inp.split("|")
+
+    if len(inp) == 0:
+        ret = False
+    else:
+        for i in inp:
+            if len(i) < 0:
+                ret = False
+                break
+            if not i[0].isalnum() and i[0] != "&":
+                ret = False
+                break
+
+    return ret
 
 def format_grammar(grammar):
     gram = {}
@@ -57,6 +71,43 @@ def format_grammar(grammar):
             gram[g[0]].append[g[1][0]]
         else:
             for o in g[1]:
-                grammar.append(g[0]+" -> "+o)
+                gram[g[0]].append(o)
 
     return gram
+
+def chomsky_normal_form(grammar):
+    grammar = _empty_productions(grammar)
+    grammar = _unitary_productions(grammar)
+    grammar = _useless_symbols(grammar)
+
+    gram = {}
+
+    for head in grammar:
+        if head not in gram:
+            gram[head] = []
+        body = grammar[head]
+        for production in body:
+            if len(production) == 1:
+                if production.islower():
+                    gram[head].append(production)
+                else:
+                    # TODO: adiciona em chomsky casos tipo A -> B
+                    pass
+            elif len(production) == 2:
+                if production.isupper():
+                    gram[head].append(production)
+                else:
+                    # TODO: adiciona em chomsky casos tipo A -> ab|aB|Ab
+                    pass
+            elif len(production) >= 3:
+                # TODO: adiciona em chosky casos de produção com tamanho maior que 2
+                pass
+
+def _empty_productions(grammar):
+    pass
+
+def _unitary_productions(grammar):
+    pass
+
+def _useless_symbols(grammar):
+    pass

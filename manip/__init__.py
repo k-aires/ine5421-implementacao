@@ -37,7 +37,7 @@ def menu():
         elif struct_type == StructType.RGRAMMAR:
             regular_grammar_menu()
         elif struct_type == StructType.CFGRAMMAR:
-            io_terminal._nope()
+            context_free_grammar_menu
 
 def input_menu():
     inp = io_terminal.input_menu()
@@ -76,8 +76,12 @@ def file_menu(opening):
                 struct = save[1]
                 if struct_type == StructType.AUTOMATA:
                     io_terminal.print_automata(struct)
-                if struct_type == StructType.EXPRESSION:
+                elif struct_type == StructType.EXPRESSION:
                     io_terminal.print_expression(struct)
+                elif struct_type == StructType.RGRAMMAR:
+                    io_terminal.print_grammar(struct)
+                elif struct_type == StructType.CFGRAMMAR:
+                    io_terminal.print_grammar(struct)
         else:
             io_terminal.file_error()
         
@@ -216,8 +220,37 @@ def regular_expression_menu():
         menu()
 
 def context_free_grammar():
-    io_terminal._nope()
-    menu()
+    global struct_type
+    global struct
+    struct = io_terminal.grammar_input(1)
+    if struct:
+        struct_type = StructType.CFGRAMMAR
+        context_free_grammar_menu()
+
+def context_free_grammar_menu():
+    global struct_type
+    global struct
+
+    ret = False
+    while True:
+        inp = io_terminal.context_free_grammar_menu()
+        if inp == 0: # Forma Normal
+            io_terminal._nope()
+        elif inp == 1: # Eliminação de recursão
+            io_terminal._nope()
+        elif inp == 2: # Fatoração
+            io_terminal._nope()
+        elif inp == 3: # Editar
+            io_terminal._nope()
+        elif inp == 4: # Salvar
+            file_menu(False)
+        elif inp == 5: # Menu
+            ret = True
+            break
+        else: # Sair
+            break
+    if ret:
+        menu()
 
 if __name__ == "__main__":
     menu()
