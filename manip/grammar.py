@@ -60,18 +60,25 @@ def _verify_context_free(inp):
     return ret
 
 def format_grammar(grammar):
-    gram = {}
+    initial = grammar[0].split(" -> ")[0]
+    alphabet = set()
+    productions = {}
 
     for g in grammar:
         g = g.split(" -> ")
-        if g[0] not in gram:
-            gram[g[0]] = []
+        if g[0] not in productions:
+            productions[g[0]] = []
         g[1] = g[1].split("|")
-        if len(g[1]) == 1:
-            gram[g[0]].append[g[1][0]]
-        else:
-            for o in g[1]:
-                gram[g[0]].append(o)
+        for body in g[1]:
+            for char in body:
+                if not char.isupper():
+                    alphabet.add(char)
+            productions[g[0]].append(body)
+
+    gram = {}
+    gram["initial"] = initial
+    gram["aplhabet"] = alphabet
+    gram["productions"] = productions
 
     return gram
 
@@ -80,22 +87,18 @@ def chomsky_normal_form(grammar):
     grammar = _unitary_productions(grammar)
     grammar = _useless_symbols(grammar)
 
-    gram = {}
+    productions = {}
 
-    for head in grammar:
-        if head not in gram:
-            gram[head] = []
-        body = grammar[head]
+    for head,body in grammar["productions"]:
+        if head not in productions:
+            productions[head] = []
         for production in body:
             if len(production) == 1:
                 if production.islower():
-                    gram[head].append(production)
-                else:
-                    # TODO: adiciona em chomsky casos tipo A -> B
-                    pass
+                    productions[head].append(production)
             elif len(production) == 2:
                 if production.isupper():
-                    gram[head].append(production)
+                    productions[head].append(production)
                 else:
                     # TODO: adiciona em chomsky casos tipo A -> ab|aB|Ab
                     pass
@@ -110,4 +113,74 @@ def _unitary_productions(grammar):
     pass
 
 def _useless_symbols(grammar):
-    pass
+    grammar = _nonproductive_symbols(grammar)
+    grammar = _unreachable_symbols(grammar)
+
+def _nonproductive_symbols(grammar):
+    productive = set(grammar["alphabet"])
+    productive.add("&")
+    
+    while True:
+        new = set()
+        for head,body in grammar["productions"]:
+            produces = True
+            for production in body:
+                produces = True
+                for symbol in production:
+                    if symbol not in productive:
+                        produces = False
+                        break
+                if produces:
+                    break
+            if produces and head not in productive:
+                new.add(head)
+        
+        if len(new) == 0:
+            break
+        productive = productive.union(new)
+
+    productions = {}
+    for head,body in grammar["productions"]:
+        if head not in productive:
+            continue
+        for prod in body:
+            produces = True
+            for symbol in prod:
+                if symbol not in productive:
+                    produces = False
+                    break
+            if not produces:
+                continue
+            if head not in productions:
+                productions[head] = []
+            productions[head].append(prod)
+    
+    grammar["productions"] = productions
+
+def _unreachable_symbols(grammar):
+    alphabet = set()
+    reachable = set()
+    new = {grammar["initial"]}
+
+    while True:
+        reachable = reachable.union(new)
+        aux = set()
+        for reach in new:
+            productions = grammar["productions"][reach]
+            for prod in productions:
+                for symbol in prod:
+                    if not symbol.isupper():
+                        alphabet.add(symbol)
+                    elif symbol in grammar["productions"]:
+                        if symbol not in reachable:
+                            aux.add(symbol)
+        new = aux.copy()
+        if len(new) == 0:
+            break
+    
+    productions = {}
+    for head,body in grammar["productions"]:
+        if head in reachable:
+            productions[head] = body
+    
+    grammar["productions"] = productions
