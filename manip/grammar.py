@@ -71,7 +71,7 @@ def format_grammar(grammar):
         g[1] = g[1].split("|")
         for body in g[1]:
             for char in body:
-                if not char.isupper():
+                if char.islower():
                     alphabet.add(char)
             productions[g[0]].append(body)
 
@@ -107,6 +107,7 @@ def chomsky_normal_form(grammar):
                 pass
 
 def _empty_productions(grammar):
+    # New state, if exists, uses '
     if "&" in grammar["alphabet"]:
         return
     
@@ -119,7 +120,8 @@ def _empty_productions(grammar):
             
             for prod in body:
                 all_epsilon = True
-                for symbol in prod:
+                for position in range(0,len(prod)):
+                    symbol,position = _get_next_symbol(position,prod)
                     if symbol not in epsilon:
                         all_epsilon = False
                         break
@@ -140,14 +142,15 @@ def _empty_productions(grammar):
                 productions[head] = []
             productions[head].append(prod)
             new = ""
-            for symbol in prod:
+            for position in range(0,len(prod)):
+                symbol,position = _get_next_symbol(position,prod)
                 if symbol not in epsilon:
                     new += symbol
             if new != prod and new != "":
                 productions[head].append(new)
     
     if grammar["initial"] in epsilon:
-        initial = grammar["initial"]+"\'"
+        initial = "{"+grammar["initial"]+"\'"+"}"
         productions[initial] = [grammar["initial"],"&"]
         grammar["initial"] = initial
     else:
@@ -160,7 +163,7 @@ def _unitary_productions(grammar):
     reach = {}
     for head,body in grammar["productions"]:
         for prod in body:
-            if len(prod) == 1 and prod in grammar["productions"]:
+            if prod in grammar["productions"]:
                 if head not in reach:
                     reach[head] = set()
                 reach[head].add(prod)
@@ -210,7 +213,8 @@ def _nonproductive_symbols(grammar):
             produces = True
             for production in body:
                 produces = True
-                for symbol in production:
+                for position in range(0,len(prod)):
+                    symbol,position = _get_next_symbol(position,prod)
                     if symbol not in productive:
                         produces = False
                         break
@@ -229,7 +233,8 @@ def _nonproductive_symbols(grammar):
             continue
         for prod in body:
             produces = True
-            for symbol in prod:
+            for position in range(0,len(prod)):
+                symbol,position = _get_next_symbol(position,prod)
                 if symbol not in productive:
                     produces = False
                     break
@@ -252,7 +257,8 @@ def _unreachable_symbols(grammar):
         for reach in new:
             productions = grammar["productions"][reach]
             for prod in productions:
-                for symbol in prod:
+                for position in range(0,len(prod)):
+                    symbol,position = _get_next_symbol(position,prod)
                     if not symbol.isupper():
                         alphabet.add(symbol)
                     elif symbol in grammar["productions"]:
@@ -268,3 +274,76 @@ def _unreachable_symbols(grammar):
             productions[head] = body
     
     grammar["productions"] = productions
+
+def factorization(grammar):
+    pass
+
+def left_recursion(grammar):
+    # New states, if any, use "
+    grammar = _direct_left_recursion(grammar)
+    grammar = _indirect_left_recursion(grammar)
+
+def _direct_left_recursion(grammar):
+    have_recursion = set()
+    for head,body in grammar["productions"]:
+        for prod in body:
+            first,position = _get_next_symbol(0,prod)
+            if first == head:
+                have_recursion.add(head)
+                break
+    
+    if len(have_recursion) > 0:
+        grammar["alphabet"].add("&")
+
+    productions = {}
+    for head,body in grammar["productions"]:
+        if head not in have_recursion:
+            productions[head] = body
+            continue
+        productions[head] = []
+        new = "{"+head+"\"}"
+        productions[new] = ["&"]
+        for prod in body:
+            first,position = _get_next_symbol(0,prod)
+            if first == head:
+                productions[new] = prod+new
+            else:
+                productions[head] = prod+new
+    
+    grammar["productions"] = productions
+
+def _indirect_left_recursion(grammar):
+    nonterminals = []
+    for head,body in grammar["productions"]:
+        nonterminals.append(head)
+
+    productions = {}
+    for i in range(0,len(nonterminals)):
+        productions[nonterminals[i]] = []
+        for j in range(0,i):
+            for prod in grammar["productions"][nonterminals[i]]:
+                first,position = _get_next_symbol(0,prod)
+                if first != nonterminals[j]:
+                    productions[nonterminals[i]].append(prod)
+                    continue
+                word = prod.lstrip(first)
+                for complement in grammar["productions"][nonterminals[j]]:
+                    productions[nonterminals[i]] = complement+word
+    
+    grammar["productions"] = productions
+    grammar = _direct_left_recursion(grammar)
+
+def _get_next_symbol(position,word):
+    symbol = ""
+    next_position = position+1
+    if word[position] != "{":
+        symbol = word[position]
+    else:
+        symbol += "{"
+        while True:
+            symbol += word[next_position]
+            next_position += 1
+            if word[next_position] == "}":
+                break
+    
+    return [symbol,next_position]

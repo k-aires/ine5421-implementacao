@@ -237,7 +237,8 @@ def context_free_grammar_menu():
         if inp == 0: # Forma Normal
             io_terminal._nope()
         elif inp == 1: # Eliminação de recursão
-            io_terminal._nope()
+            struct = grammar.left_recursion(struct)
+            io_terminal.print_grammar(struct)
         elif inp == 2: # Fatoração
             io_terminal._nope()
         elif inp == 3: # Editar
