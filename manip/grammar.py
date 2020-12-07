@@ -83,6 +83,7 @@ def format_grammar(grammar):
     return gram
 
 def chomsky_normal_form(grammar):
+    # New states, if exist, use #+(number)
     grammar = _empty_productions(grammar)
     grammar = _unitary_productions(grammar)
     grammar = _useless_symbols(grammar)
@@ -93,18 +94,56 @@ def chomsky_normal_form(grammar):
         if head not in productions:
             productions[head] = []
         for production in body:
-            if len(production) == 1:
+            length = _get_word_size(production)
+            if length == 1:
                 if production.islower():
                     productions[head].append(production)
-            elif len(production) == 2:
+            elif length == 2:
                 if production.isupper():
                     productions[head].append(production)
                 else:
-                    # TODO: adiciona em chomsky casos tipo A -> ab|aB|Ab
-                    pass
-            elif len(production) >= 3:
-                # TODO: adiciona em chosky casos de produção com tamanho maior que 2
-                pass
+                    first,position = _get_next_symbol(0,production)
+                    second,position = _get_next_symbol(position,production)
+                    new = ""
+                    if first.islower():
+                        state = "{"+first.capitalize()+"#0}"
+                        if state not in productions:
+                            productions[state] = ["first"]
+                        new += state
+                    else:
+                        new += first
+                    if second.islower():
+                        state = "{"+second.capitalize()+"#0}"
+                        if state not in productions:
+                            productions[state] = ["first"]
+                        new += state
+                    else:
+                        new += second
+            elif length >= 3:
+                new = _break_productions(head,production)
+                for newh,newb in new:
+                    if newh not in productions:
+                        productions[newh] = []
+                    productions[newh] += newb
+    
+    grammar["productions"] = productions
+
+def _break_productions(head,production):
+    productions = {}
+
+    symbol,position = _get_next_symbol(0,production)
+    next_state = "{"+head+"#1}"
+    productions[head].append(symbol+next_state)
+    for i in range(1,length-3):
+        symbol,position = _get_next_symbol(position,production)
+        new = "{"+head+"#"+i+1+"}"
+        productions[next_state] = symbol+new
+        next_state = new
+    last,position = _get_next_symbol(position,production)
+    symbol,position = _get_next_symbol(position,production)
+    productions[next_state] = last+symbol
+
+    return productions
 
 def _empty_productions(grammar):
     # New state, if exists, uses '
@@ -347,3 +386,9 @@ def _get_next_symbol(position,word):
                 break
     
     return [symbol,next_position]
+
+def _get_word_size(word):
+    lenght = 0
+    for i in range(0,len(word)):
+        symbol,i = _get_next_symbol(i,word)
+        lenght += 1
