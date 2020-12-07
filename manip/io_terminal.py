@@ -191,7 +191,11 @@ def print_expression(struct):
         print(k,": ",v)
 
 def print_grammar(struct):
-    _nope()
+    for head,body in struct["productions"]:
+        production = head+" -> "
+        for prod in body:
+            production += body+"|"
+        print(production.strip("|"))
 
 def file_error():
     print("Arquivo ou diretório não encontrado ou vazio.")
