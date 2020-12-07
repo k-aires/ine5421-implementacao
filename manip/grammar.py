@@ -158,7 +158,43 @@ def _empty_productions(grammar):
 def _unitary_productions(grammar):
     # Expects grammar to be free of empty productions
     reach = {}
+    for head,body in grammar["productions"]:
+        for prod in body:
+            if len(prod) == 1 and prod in grammar["productions"]:
+                if head not in reach:
+                    reach[head] = set()
+                reach[head].add(prod)
+    while True:
+        new = {}
+        for head,body in reach:
+            for prod in body:
+                if prod in reach:
+                    if head not in new:
+                        new[head] = []
+                    new[head] = reach[prod]
+                    if head in new[head]:
+                        new.remove(head)
+        
+        for head,body in new:
+            reach[head] = reach[head].union(new[head])
+
+        if len(new) == 0:
+            break
     
+    productions = {}
+    for head,body in grammar["productions"]:
+        productions[head] = body
+
+        if head not in reach:
+            continue
+        
+        for prod in reach[head]:
+            productions[head] += grammar["productions"][prod]
+        
+        for prod in reach[head]:
+            productions[head].remove(prod)
+    
+    grammar["productions"] = productions
 
 def _useless_symbols(grammar):
     grammar = _nonproductive_symbols(grammar)
