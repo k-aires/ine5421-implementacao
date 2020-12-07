@@ -107,10 +107,58 @@ def chomsky_normal_form(grammar):
                 pass
 
 def _empty_productions(grammar):
-    pass
+    if "&" in grammar["alphabet"]:
+        return
+    
+    epsilon = {"&"}
+    while True:
+        new = {}
+        for head,body in grammar["productions"]:
+            if head in epsilon:
+                continue
+            
+            for prod in body:
+                all_epsilon = True
+                for symbol in prod:
+                    if symbol not in epsilon:
+                        all_epsilon = False
+                        break
+                if all_epsilon:
+                    new.add(head)
+                    break
+        
+        if len(new) == 0:
+            break
+        epsilon = epsilon.union(new)
+    
+    productions = {}
+    for head,body in grammar["productions"]:
+        for prod in body:
+            if prod == "&":
+                continue
+            if head not in productions:
+                productions[head] = []
+            productions[head].append(prod)
+            new = ""
+            for symbol in prod:
+                if symbol not in epsilon:
+                    new += symbol
+            if new != prod and new != "":
+                productions[head].append(new)
+    
+    if grammar["initial"] in epsilon:
+        initial = grammar["initial"]+"\'"
+        productions[initial] = [grammar["initial"],"&"]
+        grammar["initial"] = initial
+    else:
+        grammar["alphabet"].remove("&")
+    
+    grammar["productions"] = productions
 
 def _unitary_productions(grammar):
-    pass
+    # Expects grammar to be free of empty productions
+    reach = {}
+    
 
 def _useless_symbols(grammar):
     grammar = _nonproductive_symbols(grammar)
