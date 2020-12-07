@@ -186,16 +186,23 @@ def print_automata(struct):
             for a in struct["transitions"][f][t]:
                 print(f,",",a,",",t)
 
+    print("-----")
+
 def print_expression(struct):
     for k,v in struct.items():
         print(k,": ",v)
 
+    print("-----")
+
 def print_grammar(struct):
-    for head,body in struct["productions"]:
+    for head in struct["productions"]:
+        body = struct["productions"][head]
         production = head+" -> "
         for prod in body:
-            production += body+"|"
+            production += prod+"|"
         print(production.strip("|"))
+
+    print("-----")
 
 def file_error():
     print("Arquivo ou diretório não encontrado ou vazio.")

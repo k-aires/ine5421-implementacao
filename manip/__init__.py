@@ -37,7 +37,7 @@ def menu():
         elif struct_type == StructType.RGRAMMAR:
             regular_grammar_menu()
         elif struct_type == StructType.CFGRAMMAR:
-            context_free_grammar_menu
+            context_free_grammar_menu()
 
 def input_menu():
     inp = io_terminal.input_menu()
@@ -235,7 +235,8 @@ def context_free_grammar_menu():
     while True:
         inp = io_terminal.context_free_grammar_menu()
         if inp == 0: # Forma Normal
-            io_terminal._nope()
+            struct = grammar.chomsky_normal_form(struct)
+            io_terminal.print_grammar(struct)
         elif inp == 1: # Eliminação de recursão
             struct = grammar.left_recursion(struct)
             io_terminal.print_grammar(struct)

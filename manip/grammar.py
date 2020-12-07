@@ -77,7 +77,7 @@ def format_grammar(grammar):
 
     gram = {}
     gram["initial"] = initial
-    gram["aplhabet"] = alphabet
+    gram["alphabet"] = list(alphabet)
     gram["productions"] = productions
 
     return gram
@@ -90,13 +90,13 @@ def chomsky_normal_form(grammar):
 
     productions = {}
 
-    for head,body in grammar["productions"]:
+    for head in grammar["productions"]:
+        body = grammar["productions"][head]
         if head not in productions:
             productions[head] = []
         for production in body:
             length = _get_word_size(production)
             if length == 1:
-                if production.islower():
                     productions[head].append(production)
             elif length == 2:
                 if production.isupper():
@@ -108,17 +108,18 @@ def chomsky_normal_form(grammar):
                     if first.islower():
                         state = "{"+first.capitalize()+"#0}"
                         if state not in productions:
-                            productions[state] = ["first"]
+                            productions[state] = [first]
                         new += state
                     else:
                         new += first
                     if second.islower():
                         state = "{"+second.capitalize()+"#0}"
                         if state not in productions:
-                            productions[state] = ["first"]
+                            productions[state] = [second]
                         new += state
                     else:
                         new += second
+                    productions[head].append(new)
             elif length >= 3:
                 new = _break_productions(head,production)
                 for newh,newb in new:
@@ -127,6 +128,7 @@ def chomsky_normal_form(grammar):
                     productions[newh] += newb
     
     grammar["productions"] = productions
+    return grammar
 
 def _break_productions(head,production):
     productions = {}
@@ -152,8 +154,9 @@ def _empty_productions(grammar):
     
     epsilon = {"&"}
     while True:
-        new = {}
-        for head,body in grammar["productions"]:
+        new = set()
+        for head in grammar["productions"]:
+            body = grammar["productions"][head]
             if head in epsilon:
                 continue
             
@@ -173,7 +176,8 @@ def _empty_productions(grammar):
         epsilon = epsilon.union(new)
     
     productions = {}
-    for head,body in grammar["productions"]:
+    for head in grammar["productions"]:
+        body = grammar["productions"][head]
         for prod in body:
             if prod == "&":
                 continue
@@ -192,15 +196,17 @@ def _empty_productions(grammar):
         initial = "{"+grammar["initial"]+"\'"+"}"
         productions[initial] = [grammar["initial"],"&"]
         grammar["initial"] = initial
-    else:
+    elif "&" in grammar["alphabet"]:
         grammar["alphabet"].remove("&")
     
     grammar["productions"] = productions
+    return grammar
 
 def _unitary_productions(grammar):
     # Expects grammar to be free of empty productions
     reach = {}
-    for head,body in grammar["productions"]:
+    for head in grammar["productions"]:
+        body = grammar["productions"][head]
         for prod in body:
             if prod in grammar["productions"]:
                 if head not in reach:
@@ -208,7 +214,8 @@ def _unitary_productions(grammar):
                 reach[head].add(prod)
     while True:
         new = {}
-        for head,body in reach:
+        for head in reach:
+            body = grammar["productions"][head]
             for prod in body:
                 if prod in reach:
                     if head not in new:
@@ -217,14 +224,16 @@ def _unitary_productions(grammar):
                     if head in new[head]:
                         new.remove(head)
         
-        for head,body in new:
+        for head in new:
+            body = grammar["productions"][head]
             reach[head] = reach[head].union(new[head])
 
         if len(new) == 0:
             break
     
     productions = {}
-    for head,body in grammar["productions"]:
+    for head in grammar["productions"]:
+        body = grammar["productions"][head]
         productions[head] = body
 
         if head not in reach:
@@ -237,10 +246,12 @@ def _unitary_productions(grammar):
             productions[head].remove(prod)
     
     grammar["productions"] = productions
+    return grammar
 
 def _useless_symbols(grammar):
     grammar = _nonproductive_symbols(grammar)
     grammar = _unreachable_symbols(grammar)
+    return grammar
 
 def _nonproductive_symbols(grammar):
     productive = set(grammar["alphabet"])
@@ -248,9 +259,10 @@ def _nonproductive_symbols(grammar):
     
     while True:
         new = set()
-        for head,body in grammar["productions"]:
+        for head in grammar["productions"]:
+            body = grammar["productions"][head]
             produces = True
-            for production in body:
+            for prod in body:
                 produces = True
                 for position in range(0,len(prod)):
                     symbol,position = _get_next_symbol(position,prod)
@@ -267,7 +279,8 @@ def _nonproductive_symbols(grammar):
         productive = productive.union(new)
 
     productions = {}
-    for head,body in grammar["productions"]:
+    for head in grammar["productions"]:
+        body = grammar["productions"][head]
         if head not in productive:
             continue
         for prod in body:
@@ -284,6 +297,7 @@ def _nonproductive_symbols(grammar):
             productions[head].append(prod)
     
     grammar["productions"] = productions
+    return grammar
 
 def _unreachable_symbols(grammar):
     alphabet = set()
@@ -294,8 +308,8 @@ def _unreachable_symbols(grammar):
         reachable = reachable.union(new)
         aux = set()
         for reach in new:
-            productions = grammar["productions"][reach]
-            for prod in productions:
+            production = grammar["productions"][reach]
+            for prod in production:
                 for position in range(0,len(prod)):
                     symbol,position = _get_next_symbol(position,prod)
                     if not symbol.isupper():
@@ -308,34 +322,40 @@ def _unreachable_symbols(grammar):
             break
     
     productions = {}
-    for head,body in grammar["productions"]:
+    for head in grammar["productions"]:
+        body = grammar["productions"][head]
         if head in reachable:
             productions[head] = body
     
+    grammar["alphabet"] = list(alphabet)
     grammar["productions"] = productions
+    return grammar
 
 def factorization(grammar):
     pass
 
 def left_recursion(grammar):
     # New states, if any, use "
-    grammar = _direct_left_recursion(grammar)
     grammar = _indirect_left_recursion(grammar)
+    grammar = _direct_left_recursion(grammar)
+    return grammar
 
 def _direct_left_recursion(grammar):
     have_recursion = set()
-    for head,body in grammar["productions"]:
+    for head in grammar["productions"]:
+        body = grammar["productions"][head]
         for prod in body:
             first,position = _get_next_symbol(0,prod)
             if first == head:
                 have_recursion.add(head)
                 break
     
-    if len(have_recursion) > 0:
-        grammar["alphabet"].add("&")
+    if len(have_recursion) > 0 and "&" not in grammar["alphabet"]:
+        grammar["alphabet"].append("&")
 
     productions = {}
-    for head,body in grammar["productions"]:
+    for head in grammar["productions"]:
+        body = grammar["productions"][head]
         if head not in have_recursion:
             productions[head] = body
             continue
@@ -345,20 +365,23 @@ def _direct_left_recursion(grammar):
         for prod in body:
             first,position = _get_next_symbol(0,prod)
             if first == head:
-                productions[new] = prod+new
+                productions[new].append(prod+new)
             else:
-                productions[head] = prod+new
+                productions[head].append(prod+new)
     
     grammar["productions"] = productions
+    return grammar
 
 def _indirect_left_recursion(grammar):
     nonterminals = []
-    for head,body in grammar["productions"]:
+    for head in grammar["productions"]:
         nonterminals.append(head)
 
     productions = {}
+    productions[nonterminals[0]] = grammar["productions"][nonterminals[0]]
     for i in range(0,len(nonterminals)):
-        productions[nonterminals[i]] = []
+        if nonterminals[i] not in productions:
+            productions[nonterminals[i]] = []
         for j in range(0,i):
             for prod in grammar["productions"][nonterminals[i]]:
                 first,position = _get_next_symbol(0,prod)
@@ -367,28 +390,36 @@ def _indirect_left_recursion(grammar):
                     continue
                 word = prod.lstrip(first)
                 for complement in grammar["productions"][nonterminals[j]]:
-                    productions[nonterminals[i]] = complement+word
+                    productions[nonterminals[i]].append(complement+word)
     
     grammar["productions"] = productions
-    grammar = _direct_left_recursion(grammar)
+    return grammar
 
 def _get_next_symbol(position,word):
+    if position >= len(word):
+        return ["",position]
+    
     symbol = ""
     next_position = position+1
-    if word[position] != "{":
-        symbol = word[position]
-    else:
-        symbol += "{"
+    if word[position] == "{":
+        symbol += word[position]
         while True:
-            symbol += word[next_position]
-            next_position += 1
-            if word[next_position] == "}":
+            if next_position == len(word):
                 break
+            symbol += word[next_position]
+            if word[next_position] == "}":
+                next_position += 1
+                break
+            next_position += 1
+    else:
+        symbol = word[position]
     
     return [symbol,next_position]
 
 def _get_word_size(word):
-    lenght = 0
+    length = 0
     for i in range(0,len(word)):
         symbol,i = _get_next_symbol(i,word)
-        lenght += 1
+        length += 1
+    
+    return length
