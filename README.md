@@ -20,14 +20,15 @@ Universidade Federal de Santa Catarina
 - O salvamento de arquivos usa json, passando a estrutura (um dicionário) para
   string. Os arquivos vão para a pasta .save, dentro da pasta do projeto.
 - Existem 5 arquivos fonte:
-	- `\_\_init\_\_.py`: Possui a lógica dos menus;
-	- `io\_terminal.py`: Possui a parte de entrada e saída e parte da
+	- `__init__.py`: Possui a lógica dos menus;
+	- `io_terminal.py`: Possui a parte de entrada e saída e parte da
 	  lógica de input;
 	- `automata.py`: Possui todas as funções que são chamadas pelo menu de
 	  autômatos, ou seja, todas as funções que pedem um autômato como
 parâmetro. Também possui parte da lógica de input de autômatos;
-	- `grammar.py`: No momento possui apenas parte da lógica de input de
-	  gramáticas;
+	- `grammar.py`: Possui parte da lógica de input de expressões, todas as
+	  funções relacionadas com a transformação para forma normal de chomsky
+e toda a lógica para remoção de recursão à esquerda;
 	- `expression.py`: Possui parte da lógica de input de expressões, a
 	  conversão de ER para AFD e a criação (não-funcional) de árvores de
 sintaxe.
@@ -35,7 +36,9 @@ sintaxe.
 	- edição de estruturas;
 	- conversão de AFD para GR;
 	- conversão de GR para AFND;
-	- conversão de ER para AFD.
+	- conversão de ER para AFD;
+	- fatoração de GLC;
+	- reconhecimento de sentenças em AP.
 - A conversão de ER para AFD foi parcialmente implementada, porém ainda não
   funciona. O problema atualmente está na árvore de sintaxe, o algoritmo da
 conversão em si a princípio funciona corretamente.
