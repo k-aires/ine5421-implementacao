@@ -337,6 +337,7 @@ def factorization(grammar):
 def left_recursion(grammar):
     # New states, if any, use "
     grammar = _indirect_left_recursion(grammar)
+    print(grammar)
     grammar = _direct_left_recursion(grammar)
     return grammar
 
@@ -365,7 +366,7 @@ def _direct_left_recursion(grammar):
         for prod in body:
             first,position = _get_next_symbol(0,prod)
             if first == head:
-                productions[new].append(prod+new)
+                productions[new].append(prod.lstrip(head)+new)
             else:
                 productions[head].append(prod+new)
     
@@ -378,19 +379,22 @@ def _indirect_left_recursion(grammar):
         nonterminals.append(head)
 
     productions = {}
-    productions[nonterminals[0]] = grammar["productions"][nonterminals[0]]
     for i in range(0,len(nonterminals)):
         if nonterminals[i] not in productions:
             productions[nonterminals[i]] = []
+
+        states = set()
         for j in range(0,i):
-            for prod in grammar["productions"][nonterminals[i]]:
-                first,position = _get_next_symbol(0,prod)
-                if first != nonterminals[j]:
-                    productions[nonterminals[i]].append(prod)
-                    continue
+            states.add(nonterminals[j])
+        
+        for prod in grammar["productions"][nonterminals[i]]:
+            first,position = _get_next_symbol(0,prod)
+            if first in states:
                 word = prod.lstrip(first)
-                for complement in grammar["productions"][nonterminals[j]]:
+                for complement in grammar["productions"][first]:
                     productions[nonterminals[i]].append(complement+word)
+            else:
+                productions[nonterminals[i]].append(prod)
     
     grammar["productions"] = productions
     return grammar
